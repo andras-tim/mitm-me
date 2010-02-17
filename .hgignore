@@ -1,0 +1,2 @@
+glob:*/.svn/*
+glob:.svn/*
