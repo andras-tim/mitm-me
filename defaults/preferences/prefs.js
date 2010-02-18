@@ -1,6 +1,6 @@
-pref("extensions.mitm-me.boolpref", false);
-pref("extensions.mitm-me.intpref", 0);
-pref("extensions.mitm-me.stringpref", "A string");
+pref("extensions.new_mitm-me.boolpref", false);
+pref("extensions.new_mitm-me.intpref", 0);
+pref("extensions.new_mitm-me.stringpref", "A string");
 
 // https://developer.mozilla.org/en/Localizing_extension_descriptions
-pref("extensions.andras.tim@gmail.com.description", "chrome://mitm-me/locale/overlay.properties");
+pref("extensions.mitm-me@andras.tim.description", "chrome://new_mitm-me/locale/overlay.properties");

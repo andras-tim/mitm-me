@@ -1,8 +1,8 @@
-var mitm-me = {
+var new_mitm-me = {
   onLoad: function() {
     // initialization code
     this.initialized = true;
-    this.strings = document.getElementById("mitm-me-strings");
+    this.strings = document.getElementById("new_mitm-me-strings");
   },
 
   onMenuItemCommand: function(e) {
@@ -14,8 +14,8 @@ var mitm-me = {
 
   onToolbarButtonCommand: function(e) {
     // just reuse the function above.  you can change this, obviously!
-    mitm-me.onMenuItemCommand(e);
+    new_mitm-me.onMenuItemCommand(e);
   }
 };
 
-window.addEventListener("load", mitm-me.onLoad, false);
+window.addEventListener("load", new_mitm-me.onLoad, false);
