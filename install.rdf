@@ -4,11 +4,10 @@
     <em:id>mitm-me@andras.tim</em:id>
     <em:type>2</em:type>
     <em:name>New MitM Me (Cert Error Bypass)</em:name>
-    <em:version>1.3</em:version>
+    <em:version>1.30</em:version>
     <em:creator>Andras TIM</em:creator>
     <em:contributor>Johnathan Nightingale (original addon)</em:contributor>
-    <em:description>For IT admins who want very much to click through thousands of self-signed certificate warnings and get MitM attacked, this simplifies the process. - This addon is based on johnath&#039;s MitM Me (SSL Error Bypass) addon. Unfortunately not developed further and also increased the request, so I decided to continue the development.</em:description>
-    <em:aboutURL>chrome://new_mitm-me/content/about.xul</em:aboutURL>
+    <em:description>For IT admins who want very much to clickthrough thousands of self-signed certificates and get MitM attacked, this simplifies the process. Unfortunately not developed further and also increased the request, so I decided to continue the development.</em:description>
     <em:optionsURL>chrome://new_mitm-me/content/options.xul</em:optionsURL>
     <em:targetApplication>
       <Description>
