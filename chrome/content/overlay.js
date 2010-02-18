@@ -19,6 +19,8 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Andras TIM - the new developer @ 2010
+ * andras.tim@gmail.com, andras.tim@balabit.hu
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -40,13 +42,17 @@ var mitmme = {
     this.initialized = true;
     this.strings = document.getElementById("new_mitm-me-strings");
     
-    window.setTimeout(new_mitm-me.delayedStartup, 0);
+    if (gPrefService.getBoolPref("extensions.new_mitm-me.enabled"))
+      window.setTimeout(mitmme.delayedStartup, 0);
   },
 
   delayedStartup: function() {
     // Add click handler in place of browser's
     gBrowser.removeEventListener("command", BrowserOnCommand, false);
     gBrowser.addEventListener("command", mitmme.onCommand, false);
+    if (gPrefService.getBoolPref("extensions.new_mitm-me.silent_mode"))
+      document.getElementById("content").addEventListener("DOMLinkAdded", mitmme.onCommand, false);
+
 
     // Add styling mods
     var styleSheetService = Components.classes["@mozilla.org/content/style-sheet-service;1"]
@@ -65,12 +71,13 @@ var mitmme = {
     var errorDoc = ot.ownerDocument;
     var uri = gBrowser.currentURI;
 
-    // If the event came from an ssl error page, and is the "Add Exception" button...
+    // If the event came from an ssl error page
     // optional semi-automatic "Add Exception" button event...
     // FF3.5 support: about:certerror
-    if (/^about:neterror\?e=nssBadCert/.test(errorDoc.documentURI)) {
+    if (/^about:neterror\?e=nssBadCert/.test(errorDoc.documentURI)
+     || /^about:certerror/.test(errorDoc.documentURI)) {
 
-      if (ot == errorDoc.getElementById('exceptionDialogButton')) {
+      if (ot == errorDoc.getElementById('exceptionDialogButton') || gPrefService.getBoolPref("extensions.new_mitm-me.silent_mode")) {
 
         // Get the cert
         var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]

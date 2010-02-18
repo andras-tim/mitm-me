@@ -9,7 +9,9 @@ pref("extensions.new_mitm-me.stringpref", "A string");
 */
 
 //Extension prefs
-pref("extensions.new_mitm-me.add_temporary_exceptions", false);
+pref("extensions.new_mitm-me.enabled", true);
+pref("extensions.new_mitm-me.add_temporary_exceptions", true);
+pref("extensions.new_mitm-me.silent_mode", false);
 
 //Set the environment settings
 pref("browser.ssl_override_behavior", 2);
