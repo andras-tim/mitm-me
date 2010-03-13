@@ -11,5 +11,7 @@
     <checkbox id="bool_enabled" preference="bool_enabled" label="&bool_enabled.label;" accesskey="&bool_enabled.accesskey;"/>
     <checkbox id="bool_add_temporary_exceptions" preference="bool_add_temporary_exceptions" label="&bool_add_temporary_exceptions.label;" accesskey="&bool_add_temporary_exceptions.accesskey;"/>
     <checkbox id="bool_silent_mode" preference="bool_silent_mode" label="&bool_silent_mode.label;" accesskey="&bool_silent_mode.accesskey;"/>
+    <label value=""/>
+    <label value="&info.label;"/>
   </prefpane>
 </prefwindow>

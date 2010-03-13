@@ -1,8 +1,9 @@
 <!ENTITY prefwindow.title "New MitM Me (Cert Error Bypass) preferences">
 <!ENTITY pane1.title "New MitM Me (Cert Error Bypass) preferences">
-<!ENTITY bool_enabled.label "Enable MitM Me (restart required)">
+<!ENTITY bool_enabled.label "Enable MitM Me">
 <!ENTITY bool_enabled.accesskey "E">
 <!ENTITY bool_add_temporary_exceptions.label "Add the exclusions as temporary">
 <!ENTITY bool_add_temporary_exceptions.accesskey "T">
 <!ENTITY bool_silent_mode.label "Silent mode (not wait for press the add button)">
 <!ENTITY bool_silent_mode.accesskey "S">
+<!ENTITY info.label "All changes are restart required (still)">
