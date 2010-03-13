@@ -36,22 +36,22 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-var mitmme = {
+var new_mitm_me = {
   onLoad: function() {
     // initialization code
     this.initialized = true;
     this.strings = document.getElementById("new_mitm-me-strings");
     
     if (gPrefService.getBoolPref("extensions.new_mitm-me.enabled"))
-      window.setTimeout(mitmme.delayedStartup, 0);
+      window.setTimeout(new_mitm_me.delayedStartup, 0);
   },
 
   delayedStartup: function() {
     // Add click handler in place of browser's
     gBrowser.removeEventListener("command", BrowserOnCommand, false);
-    gBrowser.addEventListener("command", mitmme.onCommand, false);
+    gBrowser.addEventListener("command", new_mitm_me.onCommand, false);
     if (gPrefService.getBoolPref("extensions.new_mitm-me.silent_mode"))
-      document.getElementById("content").addEventListener("DOMLinkAdded", mitmme.onCommand, false);
+      document.getElementById("content").addEventListener("DOMLinkAdded", new_mitm_me.onCommand, false);
 
 
     // Add styling mods
@@ -104,7 +104,7 @@ var mitmme = {
         }
 
         if(!gSSLStatus)
-          mitmme.getCert(uri);
+          new_mitm_me.getCert(uri);
 
         if(!gSSLStatus) {
           Components.utils.reportError("MITMME - No gSSLStatus on attempt to add exception")
@@ -204,4 +204,4 @@ badCertListener.prototype = {
 }
 
 
-window.addEventListener("load", function(e) { mitmme.onLoad(e); }, false);
+window.addEventListener("load", function(e) { new_mitm_me.onLoad(e); }, false);
