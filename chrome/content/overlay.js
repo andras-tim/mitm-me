@@ -41,7 +41,7 @@ var new_mitm_me = {
     // initialization code
     this.initialized = true;
     this.strings = document.getElementById("new_mitm-me-strings");
-    
+
     if (gPrefService.getBoolPref("extensions.new_mitm-me.enabled"))
       window.setTimeout(new_mitm_me.delayedStartup, 0);
   },
