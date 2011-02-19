@@ -1,0 +1,10 @@
+{
+    "name": "new-mitm-me", 
+    "license": "MPL 1.1/GPL 2.0/LGPL 2.1", 
+    "author": "Andras TIM <andras.tim@gmail.com>", 
+    "url": "http://bitbucket.org/tia/mitm-me/", 
+    "version": "2.5.0pre-alpha", 
+    "fullName": "New MitM Me (Cert Error Bypass)", 
+    "id": "mitm-me@andras.tim", 
+    "description": "For IT admins who want very much to click through thousands of self-signed certificate warnings and get MitM attacked, this simplifies the process."
+}
