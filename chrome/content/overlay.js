@@ -48,8 +48,10 @@ var new_mitm_me = {
 
   delayedStartup: function() {
     // Add click handler in place of browser's
-    gBrowser.removeEventListener("command", BrowserOnCommand, false);
-    gBrowser.addEventListener("command", new_mitm_me.onCommand, false);
+    gBrowser.removeEventListener("click", BrowserOnClick, false);
+    gBrowser.removeEventListener("command", BrowserOnClick, false);
+    gBrowser.addEventListener("click", new_mitm_me.onCommand, false);
+
     if (gPrefService.getBoolPref("extensions.new_mitm-me.silent_mode"))
       document.getElementById("content").addEventListener("DOMLinkAdded", new_mitm_me.onCommand, false);
 
@@ -64,7 +66,7 @@ var new_mitm_me = {
 
   onCommand: function(event) {
     // Don't trust synthetic events
-    if (!event.isTrusted)
+    if (!event.isTrusted || event.target.localName != "button")
       return;
 
     var ot = event.originalTarget;
@@ -140,10 +142,10 @@ var new_mitm_me = {
         if(errorDoc && errorDoc.location)
           errorDoc.location.reload();
       } else {
-        BrowserOnCommand(event);
+        BrowserOnClick(event);
       }
     } else {
-      BrowserOnCommand(event);
+      BrowserOnClick(event);
     }
   },
 
@@ -204,4 +206,4 @@ badCertListener.prototype = {
 }
 
 
-window.addEventListener("load", function(e) { new_mitm_me.onLoad(e); }, false);
+window.addEventListener("load", new_mitm_me.onLoad, false);
