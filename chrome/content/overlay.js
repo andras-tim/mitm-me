@@ -109,13 +109,13 @@ var new_mitm_me = {
           new_mitm_me.getCert(uri);
 
         if(!gSSLStatus) {
-          Components.utils.reportError("MITMME - No gSSLStatus on attempt to add exception")
+          Components.utils.reportError("NEWMITMME - No gSSLStatus on attempt to add exception")
           return;
         }
 
         gCert = gSSLStatus.QueryInterface(Components.interfaces.nsISSLStatus).serverCert;
         if(!gCert){
-          Components.utils.reportError("MITMME - No gCert on attempt to add exception")
+          Components.utils.reportError("NEWMITMME - No gCert on attempt to add exception")
           return;
         }
         // Add the exception
@@ -162,7 +162,7 @@ var new_mitm_me = {
       // We *expect* exceptions if there are problems with the certificate
       // presented by the site.  Log it, just in case, but we can proceed here,
       // with appropriate sanity checks
-      Components.utils.reportError("MITMME: Attempted to connect to a site with a bad certificate. " +
+      Components.utils.reportError("NEWMITMME: Attempted to connect to a site with a bad certificate. " +
                                    "This results in a (mostly harmless) exception being thrown. " +
                                    "Logged for information purposes only: " + e);
     } finally {
