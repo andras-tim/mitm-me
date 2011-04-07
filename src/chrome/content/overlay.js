@@ -1,77 +1,96 @@
-/* ***** BEGIN LICENSE BLOCK *****
- *   Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is MitM Me.
- *
- * The Initial Developer of the Original Code is
- * Johnathan Nightingale.
- * Portions created by the Initial Developer are Copyright (C) 2008
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- * Andras TIM - the new developer @ 2010
- * andras.tim@gmail.com, andras.tim@balabit.hu
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
-var new_mitm_me = {
+/* ***** BEGIN LICENSE BLOCK *****
+*   Version: MPL 1.1/GPL 2.0/LGPL 2.1
+*
+* The contents of this file are subject to the Mozilla Public License Version
+* 1.1 (the "License"); you may not use this file except in compliance with
+* the License. You may obtain a copy of the License at
+* http://www.mozilla.org/MPL/
+*
+* Software distributed under the License is distributed on an "AS IS" basis,
+* WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+* for the specific language governing rights and limitations under the
+* License.
+*
+* The Original Code is MitM Me.
+*
+* The Initial Developer of the Original Code is
+* Johnathan Nightingale.
+* Portions created by the Initial Developer are Copyright (C) 2008
+* the Initial Developer. All Rights Reserved.
+*
+* Contributor(s):
+* Andras TIM - the new developer @ 2010
+* andras.tim@gmail.com, andras.tim@balabit.hu
+* Foudil Brétel <foudil.newbie@bigfoot.com>
+*
+* Alternatively, the contents of this file may be used under the terms of
+* either the GNU General Public License Version 2 or later (the "GPL"), or
+* the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+* in which case the provisions of the GPL or the LGPL are applicable instead
+* of those above. If you wish to allow use of your version of this file only
+* under the terms of either the GPL or the LGPL, and not to allow others to
+* use your version of this file under the terms of the MPL, indicate your
+* decision by deleting the provisions above and replace them with the notice
+* and other provisions required by the GPL or the LGPL. If you do not delete
+* the provisions above, a recipient may use your version of this file under
+* the terms of any one of the MPL, the GPL or the LGPL.
+*
+* ***** END LICENSE BLOCK ***** */
+
+var mitm_me = {
+  DEBUG_MODE: true,
+
   onLoad: function() {
     // initialization code
     this.initialized = true;
-    this.strings = document.getElementById("new_mitm-me-strings");
+    this.strings = document.getElementById("mitm-me-strings");
 
-    if (gPrefService.getBoolPref("extensions.new_mitm-me.enabled"))
-      window.setTimeout(new_mitm_me.delayedStartup, 0);
+    // Set up preference change observer
+    this._prefService =
+      Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService)
+      .getBranch("extensions.mitm-me.");
+    this._prefService.QueryInterface(Components.interfaces.nsIPrefBranch2);
+    this._prefService.addObserver("", this, false);
+
+  //   window.setTimeout(this.delayedStartup, 1000); // 1s
+  // },
+  // delayedStartup: function() {
+
+    // Add click handler in place of browser's
+    // if (typeof BrowserOnCommand != "undefined")
+    //   gBrowser.removeEventListener("command", BrowserOnCommand, false);
+    gBrowser.removeEventListener("click", BrowserOnClick, false);
+    // TODO: harder to replace BrowserOnClick which is attached through a TabsProgressListener...
+    // see: https://developer.mozilla.org/En/Listening_to_events_on_all_tabs
+    // gBrowser.addEventListener("click", this.onClick, false);
+
+    gBrowser.addEventListener("command", this.onCommand, false);
+    var silent = this._prefService.getBoolPref("silent_mode");
+    this.dump('silent_mode: '+silent);
+    if (silent)
+      document.getElementById("content")
+      .addEventListener("DOMLinkAdded", this.onCommand, false);
   },
 
-  delayedStartup: function() {
-    // Add click handler in place of browser's
-    gBrowser.removeEventListener("click", BrowserOnClick, false);
-    gBrowser.removeEventListener("command", BrowserOnClick, false);
-    gBrowser.addEventListener("click", new_mitm_me.onCommand, false);
-
-    if (gPrefService.getBoolPref("extensions.new_mitm-me.silent_mode"))
-      document.getElementById("content").addEventListener("DOMLinkAdded", new_mitm_me.onCommand, false);
-
-
-    // Add styling mods
-    var styleSheetService = Components.classes["@mozilla.org/content/style-sheet-service;1"]
-                                      .getService(Components.interfaces.nsIStyleSheetService);
-    styleSheetService.loadAndRegisterSheet(makeURI("chrome://new_mitm-me/content/content-style.css"),
-                                           Components.interfaces.nsIStyleSheetService.USER_SHEET);
-
+  onClick: function(event) {
+    Components.utils.reportError(event);
+    mitm_me.dump("onClick");
+    mitm_me.dumpObj(event);
   },
 
   onCommand: function(event) {
     // Don't trust synthetic events
-    if (!event.isTrusted || event.target.localName != "button")
+    if (!event.isTrusted)
       return;
 
     var ot = event.originalTarget;
     var errorDoc = ot.ownerDocument;
     var uri = gBrowser.currentURI;
+
+    mitm_me.dump("originalTarget:");
+    mitm_me.dumpObj(ot.ownerDocument);
 
     // If the event came from an ssl error page
     // optional semi-automatic "Add Exception" button event...
@@ -79,7 +98,8 @@ var new_mitm_me = {
     if (/^about:neterror\?e=nssBadCert/.test(errorDoc.documentURI)
      || /^about:certerror/.test(errorDoc.documentURI)) {
 
-      if (ot == errorDoc.getElementById('exceptionDialogButton') || gPrefService.getBoolPref("extensions.new_mitm-me.silent_mode")) {
+      if (ot == errorDoc.getElementById('exceptionDialogButton')
+          || mitm_me._prefService.getBoolPref("silent_mode")) {
 
         // Get the cert
         var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
@@ -87,12 +107,12 @@ var new_mitm_me = {
 
         var hostWithPort = uri.host + ":" + uri.port;
         gSSLStatus = gBrowser.securityUI
-                                .QueryInterface(Components.interfaces.nsISSLStatusProvider)
-                                .SSLStatus;
+          .QueryInterface(Components.interfaces.nsISSLStatusProvider)
+          .SSLStatus;
         if(!gSSLStatus) {
           try {
             var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
-                                 .getService(Components.interfaces.nsIRecentBadCertsService);
+              .getService(Components.interfaces.nsIRecentBadCertsService);
             if (!recentCertsSvc)
               return;
 
@@ -106,16 +126,16 @@ var new_mitm_me = {
         }
 
         if(!gSSLStatus)
-          new_mitm_me.getCert(uri);
+          mitm_me.getCert(uri);
 
         if(!gSSLStatus) {
-          Components.utils.reportError("NEWMITMME - No gSSLStatus on attempt to add exception")
+          Components.utils.reportError("MITMME - No gSSLStatus on attempt to add exception")
           return;
         }
 
         gCert = gSSLStatus.QueryInterface(Components.interfaces.nsISSLStatus).serverCert;
         if(!gCert){
-          Components.utils.reportError("NEWMITMME - No gCert on attempt to add exception")
+          Components.utils.reportError("MITMME - No gCert on attempt to add exception")
           return;
         }
         // Add the exception
@@ -133,7 +153,7 @@ var new_mitm_me = {
           uri.asciiHost, uri.port,
           gCert,
           flags,
-          gPrefService.getBoolPref("extensions.new_mitm-me.add_temporary_exceptions"));
+          mitm_me._prefService.getBoolPref("add_temporary_exceptions"));
 
         // Eat the event
         event.stopPropagation();
@@ -147,6 +167,7 @@ var new_mitm_me = {
     } else {
       BrowserOnClick(event);
     }
+
   },
 
   // Lifted from exceptionDialog.js in PSM
@@ -160,9 +181,9 @@ var new_mitm_me = {
       }
     } catch (e) {
       // We *expect* exceptions if there are problems with the certificate
-      // presented by the site.  Log it, just in case, but we can proceed here,
+      // presented by the site. Log it, just in case, but we can proceed here,
       // with appropriate sanity checks
-      Components.utils.reportError("NEWMITMME: Attempted to connect to a site with a bad certificate. " +
+      Components.utils.reportError("MITMME: Attempted to connect to a site with a bad certificate. " +
                                    "This results in a (mostly harmless) exception being thrown. " +
                                    "Logged for information purposes only: " + e);
     } finally {
@@ -175,7 +196,47 @@ var new_mitm_me = {
                       .QueryInterface(Ci.nsISSLStatusProvider).SSLStatus;
       gCert = gSSLStatus.QueryInterface(Ci.nsISSLStatus).serverCert;
     }
-  }
+  },
+
+  onQuit: function() {
+    // Remove observer
+    this._prefService.QueryInterface(Ci.nsIPrefBranch2);
+    this._prefService.removeObserver("", this);
+  },
+
+
+  observe: function(subject, topic, data) {
+    // Observer for pref changes
+    if (topic != "nsPref:changed") return;
+    this.dump('Pref changed: '+data);
+
+    // switch(data) {
+    // case 'context':
+    // case 'replace_builtin':
+    //   this.updateUIFromPrefs();
+    //   break;
+    // }
+  },
+
+  /* Console logging functions */
+  // TODO: use Web console (C-S-k)
+  dump: function(message) { // Debuging function -- prints to javascript console
+    if(!this.DEBUG_MODE) return;
+    var ConsoleService = Cc['@mozilla.org/consoleservice;1'].getService(Ci.nsIConsoleService);
+    ConsoleService.logStringMessage(message);
+  },
+  dumpObj: function(obj) {
+    if(!this.DEBUG_MODE) return;
+    var str = "";
+    for(i in obj) {
+      try {
+        str += "obj["+i+"]: " + obj[i] + "\n";
+      } catch(e) {
+        str += "obj["+i+"]: Unavailable\n";
+      }
+    }
+    this.dump(str);
+  },
 
 };
 
@@ -205,5 +266,4 @@ badCertListener.prototype = {
   }
 }
 
-
-window.addEventListener("load", new_mitm_me.onLoad, false);
+window.addEventListener("load", function () { mitm_me.onLoad(); }, false);

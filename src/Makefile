@@ -2,7 +2,7 @@
 extension_name := mitm-me
 
 # The UUID of the extension.
-extension_uuid := mitm-me@foudil.fr
+extension_uuid := mitm-me@andras.tim
 
 # The name of the profile dir where the extension can be installed.
 profile_dir := xulschool-dev

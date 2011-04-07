@@ -1,8 +1,8 @@
-<!ENTITY new_mitm-me.label "Your localized menuitem">
-<!ENTITY new_mitm-meContext.label "Your Menuitem">
-<!ENTITY new_mitm-meContext.accesskey "Y">
-<!ENTITY new_mitm-meToolbarButton.label "Your Toolbar Button">
-<!ENTITY new_mitm-meToolbarButton.tooltip "This is your toolbar button!">
-<!ENTITY new_mitm-meSidebar.label "Your Sidebar">
-<!ENTITY new_mitm-meToolbar.name  "example">
-<!ENTITY new_mitm-meToolbar.label "This is an example toolbar. You can hide it under View &gt; toolbars &gt; &new_mitm-meToolbar.name;">
+<!ENTITY mitm-me.label "Your localized menuitem">
+<!ENTITY mitm-meContext.label "Your Menuitem">
+<!ENTITY mitm-meContext.accesskey "Y">
+<!ENTITY mitm-meToolbarButton.label "Your Toolbar Button">
+<!ENTITY mitm-meToolbarButton.tooltip "This is your toolbar button!">
+<!ENTITY mitm-meSidebar.label "Your Sidebar">
+<!ENTITY mitm-meToolbar.name  "example">
+<!ENTITY mitm-meToolbar.label "This is an example toolbar. You can hide it under View &gt; toolbars &gt; &mitm-meToolbar.name;">
