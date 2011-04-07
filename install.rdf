@@ -4,7 +4,7 @@
     <em:id>mitm-me@andras.tim</em:id>
     <em:type>2</em:type>
     <em:name>New MitM Me (Cert Error Bypass)</em:name>
-    <em:version>2.0.4</em:version>
+    <em:version>2.0.4.beta</em:version>
     <em:creator>Andras TIM</em:creator>
     <em:contributor>Johnathan Nightingale (original addon)</em:contributor>
     <em:homepageURL>http://andras-tim.github.com/new-mitm-me/</em:homepageURL>
