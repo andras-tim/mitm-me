@@ -42,6 +42,102 @@
 var mitm_me = {
   DEBUG_MODE: true,
 
+  TabsProgressListener: {
+
+    onSecurityChange: function (aWebProgress, aRequest, aState) {
+      mitm_me.dump("onSecurityChange");
+      var uri = gBrowser.currentURI;
+
+      if (uri.schemeIs("https")) {
+
+        mitm_me.dumpObj(this);
+
+        // get SSLStatus from nsISSLStatusProvider
+        gSSLStatus = gBrowser.securityUI
+          .QueryInterface(Components.interfaces.nsISSLStatusProvider)
+          .SSLStatus;
+
+        // otherwise get SSLStatus from recentBadCertsService
+        if(!gSSLStatus) {
+          mitm_me.dump("onSecurityChange: no SSLStatus from nsISSLStatusProvider, trying recentBadCertsService");
+          try {
+            if (!mitm_me._recentBadCertsService) {
+              Components.utils.reportError("MITME: no recentBadCertService ?!");
+              return;
+            }
+            var hostWithPort = uri.host + ":" + uri.port;
+            mitm_me.dump("onSecurityChange: "+hostWithPort+" gSSLStatus="+gSSLStatus);
+            gSSLStatus = mitm_me._recentBadCertsService.getRecentBadCert(hostWithPort);
+          }
+          catch (e) {
+            Components.utils.reportError(e);
+            return;
+          }
+        }
+
+        // Get the cert (XHR)
+        mitm_me.getCert(uri);
+
+        // Ultimate check for SSLStatus
+        if(!gSSLStatus) {
+          Components.utils.reportError("MITMME - No gSSLStatus on attempt to add exception")
+          return;
+        }
+        if(!gCert){
+          Components.utils.reportError("MITMME - No gCert on attempt to add exception")
+          return;
+        }
+
+        // Add the exception
+        // TODO: useful ? right place ?
+        // if (!mitm_me._overrideService) {
+        //   Components.utils.reportError("MITME: no overrideService ?!");
+        //   return;
+        // }
+        var flags = 0;
+        if(gSSLStatus.isUntrusted)
+          flags |= mitm_me._overrideService.ERROR_UNTRUSTED;
+        if(gSSLStatus.isDomainMismatch)
+          flags |= mitm_me._overrideService.ERROR_MISMATCH;
+        if(gSSLStatus.isNotValidAtThisTime)
+          flags |= mitm_me._overrideService.ERROR_TIME;
+
+        mitm_me._overrideService.rememberValidityOverride(
+          uri.asciiHost, uri.port,
+          gCert,
+          flags,
+          mitm_me._prefService.getBoolPref("add_temporary_exceptions"));
+
+        // // Reload the page
+        // gBrowser.reloadTab(gBrowser.mCurrentTab);
+        // mitm_me.dump("page reloaded");
+        // mitm_me.dumpObj(aWebProgress);
+        aWebProgress.reload();
+
+      }
+    },
+
+    onStateChange: function (aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
+      // Attach a listener to watch for "click" events bubbling up from error
+      // pages and other similar page.
+      // We can't look for this during onLocationChange since at that point the
+      // document URI is not yet the about:-uri of the error page.
+
+      if (aStateFlags & Ci.nsIWebProgressListener.STATE_STOP &&
+          /^about:certerror/.test(aWebProgress.DOMWindow.document.documentURI)) {
+        mitm_me.dump("onStateChange: certerror !");
+
+        aBrowser.addEventListener("click", mitm_me.onClick, false);
+        aBrowser.addEventListener("pagehide", function () {
+          aBrowser.removeEventListener("click", mitm_me.onClick, false);
+          aBrowser.removeEventListener("pagehide", arguments.callee, true);
+        }, true);
+
+      }
+    },
+
+  },
+
   onLoad: function() {
     // initialization code
     this.initialized = true;
@@ -54,30 +150,33 @@ var mitm_me = {
     this._prefService.QueryInterface(Components.interfaces.nsIPrefBranch2);
     this._prefService.addObserver("", this, false);
 
+    // Get the cert
+    this._recentBadCertsService =
+      Cc["@mozilla.org/security/recentbadcerts;1"]
+      .getService(Components.interfaces.nsIRecentBadCertsService);
+
+    this._overrideService =
+      Cc["@mozilla.org/security/certoverride;1"]
+      .getService(Components.interfaces.nsICertOverrideService);
+
   //   window.setTimeout(this.delayedStartup, 1000); // 1s
   // },
   // delayedStartup: function() {
 
-    // Add click handler in place of browser's
-    // if (typeof BrowserOnCommand != "undefined")
-    //   gBrowser.removeEventListener("command", BrowserOnCommand, false);
-    gBrowser.removeEventListener("click", BrowserOnClick, false);
-    // TODO: harder to replace BrowserOnClick which is attached through a TabsProgressListener...
-    // see: https://developer.mozilla.org/En/Listening_to_events_on_all_tabs
-    // gBrowser.addEventListener("click", this.onClick, false);
+    try {
+      // gBrowser.removeTabsProgressListener(window.TabsProgressListener);
+      gBrowser.addTabsProgressListener(mitm_me.TabsProgressListener);
+    } catch (ex) {
+      Components.utils.reportError(ex);
+    }
 
-    gBrowser.addEventListener("command", this.onCommand, false);
-    var silent = this._prefService.getBoolPref("silent_mode");
-    this.dump('silent_mode: '+silent);
-    if (silent)
-      document.getElementById("content")
-      .addEventListener("DOMLinkAdded", this.onCommand, false);
+    this.dump('MITME LOADED !');
   },
 
+  // TODO: this is where we're going to handle the 'silent' option
   onClick: function(event) {
-    Components.utils.reportError(event);
+    // Components.utils.reportError(event);
     mitm_me.dump("onClick");
-    mitm_me.dumpObj(event);
   },
 
   onCommand: function(event) {
@@ -90,7 +189,7 @@ var mitm_me = {
     var uri = gBrowser.currentURI;
 
     mitm_me.dump("originalTarget:");
-    mitm_me.dumpObj(ot.ownerDocument);
+    // mitm_me.dumpObj(ot.ownerDocument);
 
     // If the event came from an ssl error page
     // optional semi-automatic "Add Exception" button event...
