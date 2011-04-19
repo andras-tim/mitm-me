@@ -36,30 +36,30 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-var new_mitm_me = {
+var mitm_me = {
   onLoad: function() {
     // initialization code
     this.initialized = true;
-    this.strings = document.getElementById("new_mitm-me-strings");
+    this.strings = document.getElementById("mitm-me-strings");
 
-    if (gPrefService.getBoolPref("extensions.new_mitm-me.enabled"))
-      window.setTimeout(new_mitm_me.delayedStartup, 0);
+    if (gPrefService.getBoolPref("extensions.mitm-me.enabled"))
+      window.setTimeout(mitm_me.delayedStartup, 0);
   },
 
   delayedStartup: function() {
     // Add click handler in place of browser's
     gBrowser.removeEventListener("click", BrowserOnClick, false);
     gBrowser.removeEventListener("command", BrowserOnClick, false);
-    gBrowser.addEventListener("click", new_mitm_me.onCommand, false);
+    gBrowser.addEventListener("click", mitm_me.onCommand, false);
 
-    if (gPrefService.getBoolPref("extensions.new_mitm-me.silent_mode"))
-      document.getElementById("content").addEventListener("DOMLinkAdded", new_mitm_me.onCommand, false);
+    if (gPrefService.getBoolPref("extensions.mitm-me.silent_mode"))
+      document.getElementById("content").addEventListener("DOMLinkAdded", mitm_me.onCommand, false);
 
 
     // Add styling mods
     var styleSheetService = Components.classes["@mozilla.org/content/style-sheet-service;1"]
                                       .getService(Components.interfaces.nsIStyleSheetService);
-    styleSheetService.loadAndRegisterSheet(makeURI("chrome://new_mitm-me/content/content-style.css"),
+    styleSheetService.loadAndRegisterSheet(makeURI("chrome://mitm-me/content/content-style.css"),
                                            Components.interfaces.nsIStyleSheetService.USER_SHEET);
 
   },
@@ -79,7 +79,7 @@ var new_mitm_me = {
     if (/^about:neterror\?e=nssBadCert/.test(errorDoc.documentURI)
      || /^about:certerror/.test(errorDoc.documentURI)) {
 
-      if (ot == errorDoc.getElementById('exceptionDialogButton') || gPrefService.getBoolPref("extensions.new_mitm-me.silent_mode")) {
+      if (ot == errorDoc.getElementById('exceptionDialogButton') || gPrefService.getBoolPref("extensions.mitm-me.silent_mode")) {
 
         // Get the cert
         var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
@@ -106,16 +106,16 @@ var new_mitm_me = {
         }
 
         if(!gSSLStatus)
-          new_mitm_me.getCert(uri);
+          mitm_me.getCert(uri);
 
         if(!gSSLStatus) {
-          Components.utils.reportError("NEWMITMME - No gSSLStatus on attempt to add exception")
+          Components.utils.reportError("MITMME - No gSSLStatus on attempt to add exception")
           return;
         }
 
         gCert = gSSLStatus.QueryInterface(Components.interfaces.nsISSLStatus).serverCert;
         if(!gCert){
-          Components.utils.reportError("NEWMITMME - No gCert on attempt to add exception")
+          Components.utils.reportError("MITMME - No gCert on attempt to add exception")
           return;
         }
         // Add the exception
@@ -133,7 +133,7 @@ var new_mitm_me = {
           uri.asciiHost, uri.port,
           gCert,
           flags,
-          gPrefService.getBoolPref("extensions.new_mitm-me.add_temporary_exceptions"));
+          gPrefService.getBoolPref("extensions.mitm-me.add_temporary_exceptions"));
 
         // Eat the event
         event.stopPropagation();
@@ -162,7 +162,7 @@ var new_mitm_me = {
       // We *expect* exceptions if there are problems with the certificate
       // presented by the site.  Log it, just in case, but we can proceed here,
       // with appropriate sanity checks
-      Components.utils.reportError("NEWMITMME: Attempted to connect to a site with a bad certificate. " +
+      Components.utils.reportError("MITMME: Attempted to connect to a site with a bad certificate. " +
                                    "This results in a (mostly harmless) exception being thrown. " +
                                    "Logged for information purposes only: " + e);
     } finally {
@@ -206,4 +206,4 @@ badCertListener.prototype = {
 }
 
 
-window.addEventListener("load", new_mitm_me.onLoad, false);
+window.addEventListener("load", mitm_me.onLoad, false);

@@ -1,22 +1,22 @@
 /* This is just an example.  You shouldn't do this. */
-#new_mitm-me-hello
+#mitm-me-hello
 {
   color: red ! important;
 }
-#new_mitm-me-toolbar-button
+#mitm-me-toolbar-button
 {
-  list-style-image: url("chrome://new_mitm-me/skin/toolbar-button.png");
+  list-style-image: url("chrome://mitm-me/skin/toolbar-button.png");
   -moz-image-region: rect(0px 24px 24px 0px);
 }
-#new_mitm-me-toolbar-button:hover
+#mitm-me-toolbar-button:hover
 {
   -moz-image-region: rect(24px 24px 48px  0px);
 }
-[iconsize="small"] #new_mitm-me-toolbar-button
+[iconsize="small"] #mitm-me-toolbar-button
 {
   -moz-image-region: rect( 0px 40px 16px 24px);
 }
-[iconsize="small"] #new_mitm-me-toolbar-button:hover
+[iconsize="small"] #mitm-me-toolbar-button:hover
 {
   -moz-image-region: rect(24px 40px 40px 24px);
 }
