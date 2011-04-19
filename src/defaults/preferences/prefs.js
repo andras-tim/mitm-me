@@ -2,7 +2,6 @@
 pref("extensions.mitm-me@andras.tim.description", "chrome://mitm-me/locale/overlay.properties");
 
 //Extension prefs
-pref("extensions.mitm-me.enabled", true);
 pref("extensions.mitm-me.add_temporary_exceptions", true);
 pref("extensions.mitm-me.silent_mode", false);
 

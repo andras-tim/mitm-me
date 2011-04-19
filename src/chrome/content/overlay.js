@@ -1,3 +1,5 @@
+/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+
 /* ***** BEGIN LICENSE BLOCK *****
  *   Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
@@ -11,16 +13,12 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is MitM Me.
- *
- * The Initial Developer of the Original Code is
- * Johnathan Nightingale.
- * Portions created by the Initial Developer are Copyright (C) 2008
- * the Initial Developer. All Rights Reserved.
- *
+ * Developer:
+ * Andras Tim <andras.tim@gmail.com> All Rights Reserved.
+ * 
  * Contributor(s):
- * Andras TIM - the new developer @ 2010
- * andras.tim@gmail.com, andras.tim@balabit.hu
+ * Foudil Brétel <foudil.newbie@bigfoot.com>
+ * Johnathan Nightingale (the original addon's developer @ 2008)
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -37,41 +35,57 @@
  * ***** END LICENSE BLOCK ***** */
 
 var mitm_me = {
+  DEBUG_MODE: true,
+
   onLoad: function() {
     // initialization code
     this.initialized = true;
     this.strings = document.getElementById("mitm-me-strings");
 
-    if (gPrefService.getBoolPref("extensions.mitm-me.enabled"))
-      window.setTimeout(mitm_me.delayedStartup, 0);
+    // Set up preference change observer
+    this._prefService =
+      Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService)
+      .getBranch("extensions.mitm-me.");
+    this._prefService.QueryInterface(Components.interfaces.nsIPrefBranch2);
+    this._prefService.addObserver("", this, false);
+
+  //   window.setTimeout(this.delayedStartup, 1000); // 1s
+  // },
+  // delayedStartup: function() {
+
+    // Add click handler in place of browser's
+    // if (typeof BrowserOnCommand != "undefined")
+    //   gBrowser.removeEventListener("command", BrowserOnCommand, false);
+    gBrowser.removeEventListener("click", BrowserOnClick, false);
+    // TODO: harder to replace BrowserOnClick which is attached through a TabsProgressListener...
+    // see: https://developer.mozilla.org/En/Listening_to_events_on_all_tabs
+    // gBrowser.addEventListener("click", this.onClick, false);
+
+    gBrowser.addEventListener("command", this.onCommand, false);
+    var silent = this._prefService.getBoolPref("silent_mode");
+    this.dump('silent_mode: '+silent);
+    if (silent)
+      document.getElementById("content")
+      .addEventListener("DOMLinkAdded", this.onCommand, false);
   },
 
-  delayedStartup: function() {
-    // Add click handler in place of browser's
-    gBrowser.removeEventListener("click", BrowserOnClick, false);
-    gBrowser.removeEventListener("command", BrowserOnClick, false);
-    gBrowser.addEventListener("click", mitm_me.onCommand, false);
-
-    if (gPrefService.getBoolPref("extensions.mitm-me.silent_mode"))
-      document.getElementById("content").addEventListener("DOMLinkAdded", mitm_me.onCommand, false);
-
-
-    // Add styling mods
-    var styleSheetService = Components.classes["@mozilla.org/content/style-sheet-service;1"]
-                                      .getService(Components.interfaces.nsIStyleSheetService);
-    styleSheetService.loadAndRegisterSheet(makeURI("chrome://mitm-me/content/content-style.css"),
-                                           Components.interfaces.nsIStyleSheetService.USER_SHEET);
-
+  onClick: function(event) {
+    Components.utils.reportError(event);
+    mitm_me.dump("onClick");
+    mitm_me.dumpObj(event);
   },
 
   onCommand: function(event) {
     // Don't trust synthetic events
-    if (!event.isTrusted || event.target.localName != "button")
+    if (!event.isTrusted)
       return;
 
     var ot = event.originalTarget;
     var errorDoc = ot.ownerDocument;
     var uri = gBrowser.currentURI;
+
+    mitm_me.dump("originalTarget:");
+    mitm_me.dumpObj(ot.ownerDocument);
 
     // If the event came from an ssl error page
     // optional semi-automatic "Add Exception" button event...
@@ -79,7 +93,8 @@ var mitm_me = {
     if (/^about:neterror\?e=nssBadCert/.test(errorDoc.documentURI)
      || /^about:certerror/.test(errorDoc.documentURI)) {
 
-      if (ot == errorDoc.getElementById('exceptionDialogButton') || gPrefService.getBoolPref("extensions.mitm-me.silent_mode")) {
+      if (ot == errorDoc.getElementById('exceptionDialogButton')
+          || mitm_me._prefService.getBoolPref("silent_mode")) {
 
         // Get the cert
         var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
@@ -87,12 +102,12 @@ var mitm_me = {
 
         var hostWithPort = uri.host + ":" + uri.port;
         gSSLStatus = gBrowser.securityUI
-                                .QueryInterface(Components.interfaces.nsISSLStatusProvider)
-                                .SSLStatus;
+          .QueryInterface(Components.interfaces.nsISSLStatusProvider)
+          .SSLStatus;
         if(!gSSLStatus) {
           try {
             var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
-                                 .getService(Components.interfaces.nsIRecentBadCertsService);
+              .getService(Components.interfaces.nsIRecentBadCertsService);
             if (!recentCertsSvc)
               return;
 
@@ -133,7 +148,7 @@ var mitm_me = {
           uri.asciiHost, uri.port,
           gCert,
           flags,
-          gPrefService.getBoolPref("extensions.mitm-me.add_temporary_exceptions"));
+          mitm_me._prefService.getBoolPref("add_temporary_exceptions"));
 
         // Eat the event
         event.stopPropagation();
@@ -147,6 +162,7 @@ var mitm_me = {
     } else {
       BrowserOnClick(event);
     }
+
   },
 
   // Lifted from exceptionDialog.js in PSM
@@ -160,7 +176,7 @@ var mitm_me = {
       }
     } catch (e) {
       // We *expect* exceptions if there are problems with the certificate
-      // presented by the site.  Log it, just in case, but we can proceed here,
+      // presented by the site. Log it, just in case, but we can proceed here,
       // with appropriate sanity checks
       Components.utils.reportError("MITMME: Attempted to connect to a site with a bad certificate. " +
                                    "This results in a (mostly harmless) exception being thrown. " +
@@ -175,7 +191,47 @@ var mitm_me = {
                       .QueryInterface(Ci.nsISSLStatusProvider).SSLStatus;
       gCert = gSSLStatus.QueryInterface(Ci.nsISSLStatus).serverCert;
     }
-  }
+  },
+
+  onQuit: function() {
+    // Remove observer
+    this._prefService.QueryInterface(Ci.nsIPrefBranch2);
+    this._prefService.removeObserver("", this);
+  },
+
+
+  observe: function(subject, topic, data) {
+    // Observer for pref changes
+    if (topic != "nsPref:changed") return;
+    this.dump('Pref changed: '+data);
+
+    // switch(data) {
+    // case 'context':
+    // case 'replace_builtin':
+    //   this.updateUIFromPrefs();
+    //   break;
+    // }
+  },
+
+  /* Console logging functions */
+  // TODO: use Web console (C-S-k)
+  dump: function(message) { // Debuging function -- prints to javascript console
+    if(!this.DEBUG_MODE) return;
+    var ConsoleService = Cc['@mozilla.org/consoleservice;1'].getService(Ci.nsIConsoleService);
+    ConsoleService.logStringMessage(message);
+  },
+  dumpObj: function(obj) {
+    if(!this.DEBUG_MODE) return;
+    var str = "";
+    for(i in obj) {
+      try {
+        str += "obj["+i+"]: " + obj[i] + "\n";
+      } catch(e) {
+        str += "obj["+i+"]: Unavailable\n";
+      }
+    }
+    this.dump(str);
+  },
 
 };
 
@@ -205,5 +261,4 @@ badCertListener.prototype = {
   }
 }
 
-
-window.addEventListener("load", mitm_me.onLoad, false);
+window.addEventListener("load", function () { mitm_me.onLoad(); }, false);

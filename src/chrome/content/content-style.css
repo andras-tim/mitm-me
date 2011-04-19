@@ -1,7 +1,0 @@
-#securityOverrideDiv > #securityOverrideContent {
-  display: block !important;
-}
-
-#securityOverrideDiv > #securityOverrideLink {
-  display: none !important;
-}
