@@ -49,19 +49,9 @@ var mitm_me = {
     this._prefService.QueryInterface(Components.interfaces.nsIPrefBranch2);
     this._prefService.addObserver("", this, false);
 
-  //   window.setTimeout(this.delayedStartup, 1000); // 1s
-  // },
-  // delayedStartup: function() {
+    //gBrowser.removeEventListener("click", BrowserOnClick, false);
+    gBrowser.addEventListener("click", this.onCommand, false);
 
-    // Add click handler in place of browser's
-    // if (typeof BrowserOnCommand != "undefined")
-    //   gBrowser.removeEventListener("command", BrowserOnCommand, false);
-    gBrowser.removeEventListener("click", BrowserOnClick, false);
-    // TODO: harder to replace BrowserOnClick which is attached through a TabsProgressListener...
-    // see: https://developer.mozilla.org/En/Listening_to_events_on_all_tabs
-    // gBrowser.addEventListener("click", this.onClick, false);
-
-    gBrowser.addEventListener("command", this.onCommand, false);
     var silent = this._prefService.getBoolPref("silent_mode");
     this.dump('silent_mode: '+silent);
     if (silent)
@@ -69,17 +59,7 @@ var mitm_me = {
       .addEventListener("DOMLinkAdded", this.onCommand, false);
   },
 
-  onClick: function(event) {
-    Components.utils.reportError(event);
-    mitm_me.dump("onClick");
-    mitm_me.dumpObj(event);
-  },
-
   onCommand: function(event) {
-    // Don't trust synthetic events
-    if (!event.isTrusted)
-      return;
-
     var ot = event.originalTarget;
     var errorDoc = ot.ownerDocument;
     var uri = gBrowser.currentURI;
@@ -90,79 +70,90 @@ var mitm_me = {
     // If the event came from an ssl error page
     // optional semi-automatic "Add Exception" button event...
     // FF3.5 support: about:certerror
-    if (/^about:neterror\?e=nssBadCert/.test(errorDoc.documentURI)
-     || /^about:certerror/.test(errorDoc.documentURI)) {
-
-      if (ot == errorDoc.getElementById('exceptionDialogButton')
-          || mitm_me._prefService.getBoolPref("silent_mode")) {
-
-        // Get the cert
-        var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
-                            .getService(Components.interfaces.nsIRecentBadCertsService);
-
-        var hostWithPort = uri.host + ":" + uri.port;
-        gSSLStatus = gBrowser.securityUI
-          .QueryInterface(Components.interfaces.nsISSLStatusProvider)
-          .SSLStatus;
-        if(!gSSLStatus) {
-          try {
-            var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
-              .getService(Components.interfaces.nsIRecentBadCertsService);
-            if (!recentCertsSvc)
-              return;
-
-            var hostWithPort = uri.host + ":" + uri.port;
-            gSSLStatus = recentCertsSvc.getRecentBadCert(hostWithPort);
-          }
-          catch (e) {
-            Components.utils.reportError(e);
-            return;
-          }
-        }
-
-        if(!gSSLStatus)
-          mitm_me.getCert(uri);
-
-        if(!gSSLStatus) {
-          Components.utils.reportError("MITMME - No gSSLStatus on attempt to add exception")
-          return;
-        }
-
-        gCert = gSSLStatus.QueryInterface(Components.interfaces.nsISSLStatus).serverCert;
-        if(!gCert){
-          Components.utils.reportError("MITMME - No gCert on attempt to add exception")
-          return;
-        }
-        // Add the exception
-        var overrideService = Components.classes["@mozilla.org/security/certoverride;1"]
-                                        .getService(Components.interfaces.nsICertOverrideService);
-        var flags = 0;
-        if(gSSLStatus.isUntrusted)
-          flags |= overrideService.ERROR_UNTRUSTED;
-        if(gSSLStatus.isDomainMismatch)
-          flags |= overrideService.ERROR_MISMATCH;
-        if(gSSLStatus.isNotValidAtThisTime)
-          flags |= overrideService.ERROR_TIME;
-
-        overrideService.rememberValidityOverride(
-          uri.asciiHost, uri.port,
-          gCert,
-          flags,
-          mitm_me._prefService.getBoolPref("add_temporary_exceptions"));
-
-        // Eat the event
-        event.stopPropagation();
-
-        // Reload the page
-        if(errorDoc && errorDoc.location)
-          errorDoc.location.reload();
-      } else {
-        BrowserOnClick(event);
-      }
-    } else {
+    if (! (/^about:neterror\?e=nssBadCert/.test(errorDoc.documentURI)
+     || /^about:certerror/.test(errorDoc.documentURI)))
+    {
       BrowserOnClick(event);
+      return;
     }
 
+    var edb = errorDoc.getElementById('exceptionDialogButton');
+    if (edb)
+      edb.id = 'exceptionDialogButton_ModifiedByMitMMe';
+
+    // Don't trust synthetic events
+    if (!event.isTrusted)
+    {
+      BrowserOnClick(event);
+      return;
+    }
+
+    if (!(ot == errorDoc.getElementById('exceptionDialogButton_ModifiedByMitMMe') || mitm_me._prefService.getBoolPref("silent_mode")))
+    {
+      BrowserOnClick(event);
+      return;
+    }
+
+    // Get the cert
+    var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
+                        .getService(Components.interfaces.nsIRecentBadCertsService);
+
+    var hostWithPort = uri.host + ":" + uri.port;
+    gSSLStatus = gBrowser.securityUI
+      .QueryInterface(Components.interfaces.nsISSLStatusProvider)
+      .SSLStatus;
+    if(!gSSLStatus) {
+      try {
+        var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
+          .getService(Components.interfaces.nsIRecentBadCertsService);
+        if (!recentCertsSvc)
+          return;
+
+        var hostWithPort = uri.host + ":" + uri.port;
+        gSSLStatus = recentCertsSvc.getRecentBadCert(hostWithPort);
+      }
+      catch (e) {
+        Components.utils.reportError(e);
+        return;
+      }
+    }
+
+    if(!gSSLStatus)
+      mitm_me.getCert(uri);
+
+    if(!gSSLStatus) {
+      Components.utils.reportError("MITMME - No gSSLStatus on attempt to add exception")
+      return;
+    }
+
+    gCert = gSSLStatus.QueryInterface(Components.interfaces.nsISSLStatus).serverCert;
+    if(!gCert){
+      Components.utils.reportError("MITMME - No gCert on attempt to add exception")
+      return;
+    }
+    // Add the exception
+    var overrideService = Components.classes["@mozilla.org/security/certoverride;1"]
+                                    .getService(Components.interfaces.nsICertOverrideService);
+    var flags = 0;
+    if(gSSLStatus.isUntrusted)
+      flags |= overrideService.ERROR_UNTRUSTED;
+    if(gSSLStatus.isDomainMismatch)
+      flags |= overrideService.ERROR_MISMATCH;
+    if(gSSLStatus.isNotValidAtThisTime)
+      flags |= overrideService.ERROR_TIME;
+
+    overrideService.rememberValidityOverride(
+      uri.asciiHost, uri.port,
+      gCert,
+      flags,
+      mitm_me._prefService.getBoolPref("add_temporary_exceptions"));
+
+    // Eat the event
+    event.stopPropagation();
+
+    // Reload the page
+    if(errorDoc && errorDoc.location)
+      errorDoc.location.reload();
   },
 
   // Lifted from exceptionDialog.js in PSM
