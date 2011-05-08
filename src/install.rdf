@@ -4,10 +4,10 @@
     <em:id>mitm-me@andras.tim</em:id>
     <em:type>2</em:type>
     <em:name>MitM Me (Cert Error Bypass)</em:name>
-    <em:version>2.0.4.beta</em:version>
+    <em:version>2.0.4</em:version>
     <em:creator>Andras TIM</em:creator>
-    <em:contributor>Johnathan Nightingale (original addon)</em:contributor>
     <em:contributor>Foudil Brétel</em:contributor>
+    <em:contributor>Johnathan Nightingale (original addon @ 2008)</em:contributor>
     <em:homepageURL>http://andras-tim.github.com/mitm-me/</em:homepageURL>
     <em:iconURL>chrome://mitm-me/skin/logo.png</em:iconURL>
     <em:description>For IT admins who want very much to click through thousands of self-signed certificate warnings and get MitM attacked, this simplifies the process.</em:description>
