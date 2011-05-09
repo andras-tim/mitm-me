@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset='utf-8'/>
     <title>MitM Me @ GitHub</title>
@@ -12,15 +12,15 @@
         }
         #container {
             margin: 0 auto;
-            width: 700px;
+            width: 730px;
         }
-        h1 { font-size: 3.8em; color: #0505b8; margin-bottom: 3px; }
+        h1 { font-size: 3em; color: #0505b8; margin-bottom: 3px; }
         h1 .small { font-size: 0.4em; }
         h1 a { text-decoration: none }
-        h2 { font-size: 1.5em; color: #0505b8; }
-        h3 { text-align: center; color: #0505b8; }
+        h2 { font-size: 1.5em; }
         a { color: #0505b8; }
-        .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
+        .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic; text-align: justify; }
+        .description2 { text-align: justify; }
         .download { float: right; }
         pre { background: #000; color: #fff; padding: 15px;}
         hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
@@ -40,19 +40,22 @@
             <a href="http://github.com/andras-tim/mitm-me">MitM Me (Cert Error Bypass)</a>
             <span class="small">by <a href="http://github.com/andras-tim">andras-tim</a></span>
         </h1>
-        <div class="description">
-            For IT admins who want very much to click through thousands of self-signed certificate warnings and get MitM attacked, this simplifies the process.
-        </div>
+        <p class="description">
+            For IT admins who want very much to click through thousands of self-signed certificate warnings and get MitM
+            attacked, this simplifies the process.
+        </p>
         <ul>
             <li>Auto-show the add exception button on ssl error pages</li>
             <li>Fast-track the exception adding process to not even show the dialog.</li>
             <li>Use an options window to control whether exceptions are temporary/permanent</li>
             <li>Silent mode for automate the exception</li>
         </ul>
-        </p>This is ridiculously vulnerable to man-in-the-middle attacks and only networking professionals dealing with hundreds of self-signed certificates should even think about it. And those people should think about using it only in a separate profile. With gloves on. On non-public networks. With antibiotics.</p>
+        <p class="description2">This is ridiculously vulnerable to man-in-the-middle attacks and only networking professionals dealing with
+        hundreds of self-signed certificates should even think about it. And those people should think about using it only
+        in a separate profile. With gloves on. On non-public networks. With antibiotics.</p>
 
-        <h2>Dependencies</h2>
-        <p>>= Mozilla Firefox 3.x</p>
+        <h2>Bugs and Issues</h2>
+        <p>You can add or track issues and bugs at <a href="https://github.com/andras-tim/mitm-me/issues">Issues on GitHub page</a></p>
 
         <h2>Contacts & Authors</h2>
         <ul>
@@ -61,24 +64,13 @@
             <li>Johnathan Nightingale <i>(the original addon's developer @ 2008)</i></li>
         </ul>
 
-        <h2>Download Addon</h2>
-        <p>
-            You can download this addon in there: <a href="http://addons.mozilla.org/firefox/addon/mitm-me">MitM Me</a>
-        </p>
-
-        <h2>Download Source</h2>
-        <p>
-            You can download this project in either
-            <a href="http://github.com/andras-tim/mitm-me/zipball/master">zip</a> or
-            <a href="http://github.com/andras-tim/mitm-me/tarball/master">tar</a> formats.
-        </p>
-        <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-            by running:
-            <pre>$ git clone git://github.com/andras-tim/mitm-me</pre>
-        </p>
+        <h2>Downloads</h2>
+        <ul>
+            <li><b><a href="http://addons.mozilla.org/firefox/addon/mitm-me">Released Addon version</a></b></li>
+            <li><a href="http://github.com/andras-tim/mitm-me">Source code</a></li>
+        </ul>
 
         <div class="footer">
-            get the source code on GitHub : <a href="http://github.com/andras-tim/mitm-me">andras-tim/mitm-me</a>
         </div>
     </div>
 
