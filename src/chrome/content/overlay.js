@@ -35,7 +35,7 @@
  * ***** END LICENSE BLOCK ***** */
 
 var mitm_me = {
-  DEBUG_MODE: true,
+  DEBUG_MODE: false,
 
   onLoad: function() {
     // initialization code
