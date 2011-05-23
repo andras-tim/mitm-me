@@ -1,0 +1,29 @@
+onCommand :: gBrowser.currentURI
+obj[spec]: http://www.clevelandutilities.com/obppay.htm
+obj[scheme]: http
+obj[equals]: function equals() {
+    [native code]
+}
+obj[prePath]: http://www.clevelandutilities.com
+obj[userPass]: 
+obj[username]: 
+obj[password]: 
+obj[hostPort]: www.clevelandutilities.com
+obj[host]: www.clevelandutilities.com
+obj[port]: -1
+obj[path]: /obppay.htm
+obj[schemeIs]: function schemeIs() {
+    [native code]
+}
+obj[clone]: function clone() {
+    [native code]
+}
+obj[resolve]: function resolve() {
+    [native code]
+}
+obj[asciiSpec]: http://www.clevelandutilities.com/obppay.htm
+obj[asciiHost]: www.clevelandutilities.com
+obj[originCharset]: UTF-8
+obj[QueryInterface]: function QueryInterface() {
+    [native code]
+}

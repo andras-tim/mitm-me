@@ -1,0 +1,1392 @@
+onCommand :: gBrowser.currentURI
+obj[mPanelContainer]: [object XULElement]
+obj[mCurrentBrowser]: [object XULElement]
+obj[tabContainer]: [object XULElement]
+obj[mCurrentTab]: [object XULElement]
+obj[_autoScrollPopup]: [object XULElement]
+obj[mTabBox]: [object XULElement]
+obj[mStringBundle]: [object XULElement]
+obj[_fastFind]: [xpconnect wrapped nsITypeAheadFind]
+obj[onxblDOMTitleChanged]: function onxblDOMTitleChanged(event) {
+    if (!event.isTrusted) {
+        return;
+    }
+    var contentWin = event.target.defaultView;
+    if (contentWin != contentWin.top) {
+        return;
+    }
+    var tab = this._getTabForContentWindow(contentWin);
+    var titleChanged = this.setTabTitle(tab);
+    if (titleChanged && !tab.selected && !tab.hasAttribute("busy")) {
+        tab.setAttribute("titlechanged", "true");
+    }
+}
+obj[_browsers]: [object XULElement]
+obj[tabs]: [object NodeList]
+obj[mURIFixup]: [xpconnect wrapped nsIURIFixup]
+obj[mAddProgressListenerWasCalled]: true
+obj[_removingTabs]: 
+obj[mTabbedMode]: true
+obj[mProgressListeners]: [object Object],[object Object],[object Object]
+obj[mTabsProgressListeners]: [object Object],[object Object]
+obj[mTabFilters]: [xpconnect wrapped nsIWebProgress]
+obj[mTabListeners]: [object Object]
+obj[mIsBusy]: false
+obj[_endRemoveTab]: function _endRemoveTab(aTab) {
+    if (!aTab || !aTab._endRemoveArgs) {
+        return;
+    }
+    var [aCloseWindow, aNewTab] = aTab._endRemoveArgs;
+    aTab._endRemoveArgs = null;
+    if (this._windowIsClosing) {
+        aCloseWindow = false;
+        aNewTab = false;
+    }
+    this._lastRelatedTab = null;
+    aTab.collapsed = true;
+    if (aNewTab) {
+        if (SpeedDial.loadInLastTab) {
+            this.addTab("chrome://speeddial/content/speeddial.xul", {skipAnimation: true});
+        } else {
+            this.addTab("about:blank", {skipAnimation: true});
+        }
+    }
+    this.tabContainer._fillTrailingGap();
+    this._blurTab(aTab);
+    this._removingTabs.splice(this._removingTabs.indexOf(aTab), 1);
+    if (aCloseWindow) {
+        this._windowIsClosing = true;
+        while (this._removingTabs.length) {
+            this._endRemoveTab(this._removingTabs[0]);
+        }
+    } else if (!this._windowIsClosing) {
+        if (aNewTab) {
+            focusAndSelectUrlBar();
+        }
+        this.tabContainer.mTabstrip._updateScrollButtonsDisabledState();
+    }
+    this.mTabFilters.splice(aTab._tPos, 1);
+    this.mTabListeners.splice(aTab._tPos, 1);
+    var browser = this.getBrowserForTab(aTab);
+    browser.destroy();
+    if (browser == this.mCurrentBrowser) {
+        this.mCurrentBrowser = null;
+    }
+    var wasPinned = aTab.pinned;
+    this._browsers = null;
+    this.tabContainer.removeChild(aTab);
+    for (let i = aTab._tPos; i < this.tabs.length; i++) {
+        this.tabs[i]._tPos = i;
+    }
+    if (!this._windowIsClosing) {
+        if (wasPinned) {
+            this.tabContainer._positionPinnedTabs();
+        }
+        this.tabContainer.adjustTabstrip();
+    }
+    this.selectedTab._selected = true;
+    var panel = browser.parentNode.parentNode;
+    panel.removeChild(browser.parentNode);
+    if (this.mTabBox) {
+        let selectedPanel = this.mTabBox.selectedPanel;
+        this.mPanelContainer.removeChild(panel);
+        this.mTabBox.selectedPanel = selectedPanel;
+    }
+    if (aCloseWindow) {
+        this._windowIsClosing = closeWindow(true);
+    }
+}
+obj[_placesAutocomplete]: [xpconnect wrapped mozIPlacesAutoComplete]
+obj[mFaviconService]: [xpconnect wrapped nsIFaviconService]
+obj[onclick]: function onclick(event) {
+    return contentAreaClick(event, false);
+}
+obj[_lastRelatedTab]: null
+obj[arrowKeysShouldWrap]: false
+obj[_previewMode]: false
+obj[_windowIsClosing]: false
+obj[tabContextMenu]: [object XULElement]
+obj[visibleTabs]: [object XULElement]
+obj[_numPinnedTabs]: 0
+obj[updateWindowResizers]: function updateWindowResizers() {
+    if (!window.gShowPageResizers) {
+        return;
+    }
+    var show = document.getElementById("addon-bar").collapsed &&
+        window.windowState == window.STATE_NORMAL;
+    for (let i = 0; i < this.browsers.length; i++) {
+        this.browsers[i].showWindowResizer = show;
+    }
+}
+obj[_setCloseKeyState]: function _setCloseKeyState(aEnabled) {
+    var keyClose = document.getElementById("key_close");
+    var closeKeyEnabled = keyClose.getAttribute("disabled") != "true";
+    if (closeKeyEnabled == aEnabled) {
+        return;
+    }
+    if (aEnabled) {
+        keyClose.removeAttribute("disabled");
+    } else {
+        keyClose.setAttribute("disabled", "true");
+    }
+    var closeMenuItem = document.getElementById("menu_close");
+    var parentPopup = closeMenuItem.parentNode;
+    var nextItem = closeMenuItem.nextSibling;
+    var clonedItem = closeMenuItem.cloneNode(true);
+    parentPopup.removeChild(closeMenuItem);
+    if (aEnabled) {
+        clonedItem.setAttribute("key", "key_close");
+    } else {
+        clonedItem.removeAttribute("key");
+    }
+    parentPopup.insertBefore(clonedItem, nextItem);
+}
+obj[pinTab]: function pinTab(aTab) {
+    if (aTab.pinned) {
+        return;
+    }
+    if (aTab.hidden) {
+        this.showTab(aTab);
+    }
+    this.moveTabTo(aTab, this._numPinnedTabs);
+    aTab.setAttribute("pinned", "true");
+    this.tabContainer._positionPinnedTabs();
+    this.tabContainer.adjustTabstrip();
+    this.getBrowserForTab(aTab).docShell.isAppTab = true;
+    if (aTab.selected) {
+        this._setCloseKeyState(false);
+    }
+    var event = document.createEvent("Events");
+    event.initEvent("TabPinned", true, false);
+    aTab.dispatchEvent(event);
+}
+obj[unpinTab]: function unpinTab(aTab) {
+    if (!aTab.pinned) {
+        return;
+    }
+    this.moveTabTo(aTab, this._numPinnedTabs - 1);
+    aTab.setAttribute("fadein", "true");
+    aTab.removeAttribute("pinned");
+    aTab.style.MozMarginStart = "";
+    this.tabContainer._positionPinnedTabs();
+    this.tabContainer.adjustTabstrip();
+    this.getBrowserForTab(aTab).docShell.isAppTab = false;
+    if (aTab.selected) {
+        this._setCloseKeyState(true);
+    }
+    var event = document.createEvent("Events");
+    event.initEvent("TabUnpinned", true, false);
+    aTab.dispatchEvent(event);
+}
+obj[previewTab]: function previewTab(aTab, aCallback) {
+    var currentTab = this.selectedTab;
+    try {
+        this._previewMode = true;
+        this.selectedTab = aTab;
+        aCallback();
+    } finally {
+        this.selectedTab = currentTab;
+        this._previewMode = false;
+    }
+}
+obj[getBrowserAtIndex]: function getBrowserAtIndex(aIndex) {
+    return this.browsers[aIndex];
+}
+obj[getBrowserIndexForDocument]: function getBrowserIndexForDocument(aDocument) {
+    var tab = this._getTabForContentWindow(aDocument.defaultView);
+    return tab ? tab._tPos : -1;
+}
+obj[getBrowserForDocument]: function getBrowserForDocument(aDocument) {
+    var tab = this._getTabForContentWindow(aDocument.defaultView);
+    return tab ? tab.linkedBrowser : null;
+}
+obj[_getTabForContentWindow]: function _getTabForContentWindow(aWindow) {
+    for (let i = 0; i < this.browsers.length; i++) {
+        if (this.browsers[i].contentWindow == aWindow) {
+            return this.tabs[i];
+        }
+    }
+    return null;
+}
+obj[getNotificationBox]: function getNotificationBox(aBrowser) {
+    return (aBrowser || this.mCurrentBrowser).parentNode.parentNode;
+}
+obj[getTabModalPromptBox]: function getTabModalPromptBox(aBrowser) {
+    const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+    var browser = aBrowser || this.mCurrentBrowser;
+    var stack = browser.parentNode;
+    var self = this;
+    var promptBox = {appendPrompt: function (args, onCloseCallback) {var count = browser.getAttribute("tabmodalPromptShowing");if (count) {count = parseInt(count) + 1;} else {count = 1;}browser.setAttribute("tabmodalPromptShowing", count);var newPrompt = document.createElementNS(XUL_NS, "tabmodalprompt");stack.appendChild(newPrompt);newPrompt.clientTop;var tab = self._getTabForContentWindow(browser.contentWindow);newPrompt.init(args, tab, onCloseCallback);return newPrompt;}, removePrompt: function (aPrompt) {var count = parseInt(browser.getAttribute("tabmodalPromptShowing"));count--;if (count) {browser.setAttribute("tabmodalPromptShowing", count);} else {browser.removeAttribute("tabmodalPromptShowing");}stack.removeChild(aPrompt);}, listPrompts: function (aPrompt) {var prompts = [];var els = stack.getElementsByTagNameNS(XUL_NS, "tabmodalprompt");for (let i = 0; i < els.length; i++) {prompts.push(els[i]);}return prompts;}};
+    return promptBox;
+}
+obj[_callProgressListeners]: function _callProgressListeners(aBrowser, aMethod, aArguments, aCallGlobalListeners, aCallTabsListeners) {
+    var rv = true;
+    if (!aBrowser) {
+        aBrowser = this.mCurrentBrowser;
+    }
+    if (aCallGlobalListeners != false && aBrowser == this.mCurrentBrowser) {
+        this.mProgressListeners.forEach(function (p) {if (aMethod in p) {try {if (!p[aMethod].apply(p, aArguments)) {rv = false;}} catch (e) {Components.utils.reportError(e);}}});
+    }
+    if (aCallTabsListeners != false) {
+        aArguments.unshift(aBrowser);
+        this.mTabsProgressListeners.forEach(function (p) {if (aMethod in p) {try {if (!p[aMethod].apply(p, aArguments)) {rv = false;}} catch (e) {Components.utils.reportError(e);}}});
+    }
+    return rv;
+}
+obj[mTabProgressListener]: function mTabProgressListener(aTab, aBrowser, aStartsBlank) {
+    return {mTabBrowser: this, mTab: aTab, mBrowser: aBrowser, mBlank: aStartsBlank, mStateFlags: 0, mStatus: 0, mMessage: "", mTotalProgress: 0, mRequestCount: 0, destroy: function () {delete this.mTab;delete this.mBrowser;delete this.mTabBrowser;}, _callProgressListeners: function () {Array.unshift(arguments, this.mBrowser);return this.mTabBrowser._callProgressListeners.apply(this.mTabBrowser, arguments);}, onProgressChange: function (aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {this.mTotalProgress = aMaxTotalProgress ? aCurTotalProgress / aMaxTotalProgress : 0;if (this.mBlank) {return;}if (this.mTotalProgress) {this.mTab.setAttribute("progress", "true");}this._callProgressListeners("onProgressChange", [aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress]);}, onProgressChange64: function (aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {return this.onProgressChange(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress);}, onStateChange: function (aWebProgress, aRequest, aStateFlags, aStatus) {if (!aRequest) {return;}var oldBlank = this.mBlank;const nsIWebProgressListener = Components.interfaces.nsIWebProgressListener;const nsIChannel = Components.interfaces.nsIChannel;if (aStateFlags & nsIWebProgressListener.STATE_START) {this.mRequestCount++;} else if (aStateFlags & nsIWebProgressListener.STATE_STOP) {const NS_ERROR_UNKNOWN_HOST = 2152398878;if (--this.mRequestCount > 0 && aStatus == NS_ERROR_UNKNOWN_HOST) {return;}this.mRequestCount = 0;}if (aStateFlags & nsIWebProgressListener.STATE_START && aStateFlags & nsIWebProgressListener.STATE_IS_NETWORK) {if (aWebProgress.DOMWindow == this.mBrowser.contentWindow) {this.mBrowser.userTypedClear += 2;}if (!this.mBlank) {if (!(aStateFlags & nsIWebProgressListener.STATE_RESTORING)) {this.mTab.setAttribute("busy", "true");this.mTabBrowser.setTabTitleLoading(this.mTab);}if (this.mTab.selected) {this.mTabBrowser.mIsBusy = true;}}} else if (aStateFlags & nsIWebProgressListener.STATE_STOP && aStateFlags & nsIWebProgressListener.STATE_IS_NETWORK) {if (aWebProgress.DOMWindow == this.mBrowser.contentWindow) {if (this.mBrowser.userTypedClear > 1) {this.mBrowser.userTypedClear -= 2;} else if (this.mBrowser.userTypedClear > 0) {this.mBrowser.userTypedClear--;}if (!this.mBrowser.mIconURL) {this.mTabBrowser.useDefaultIcon(this.mTab);}}if (this.mBlank) {this.mBlank = false;}this.mTab.removeAttribute("busy");this.mTab.removeAttribute("progress");var location = aRequest.QueryInterface(nsIChannel).URI;if (location.scheme == "keyword") {this.mBrowser.userTypedValue = null;}if (this.mTab.label == this.mTabBrowser.mStringBundle.getString("tabs.connecting")) {this.mTabBrowser.setTabTitle(this.mTab);}if (this.mTab.selected) {this.mTabBrowser.mIsBusy = false;}}if (oldBlank) {this._callProgressListeners("onUpdateCurrentBrowser", [aStateFlags, aStatus, "", 0], true, false);} else {this._callProgressListeners("onStateChange", [aWebProgress, aRequest, aStateFlags, aStatus], true, false);}this._callProgressListeners("onStateChange", [aWebProgress, aRequest, aStateFlags, aStatus], false);if (aStateFlags & (nsIWebProgressListener.STATE_START | nsIWebProgressListener.STATE_STOP)) {this.mMessage = "";this.mTotalProgress = 0;}this.mStateFlags = aStateFlags;this.mStatus = aStatus;}, onLocationChange: function (aWebProgress, aRequest, aLocation) {var topLevel = aWebProgress.DOMWindow == this.mBrowser.contentWindow;if (topLevel) {if (this.mBrowser.userTypedClear > 0) {this.mBrowser.userTypedValue = null;}this.mBrowser.missingPlugins = null;if (aWebProgress.isLoadingDocument && !(this.mBrowser.docShell.loadType & Ci.nsIDocShell.LOAD_CMD_PUSHSTATE)) {this.mBrowser.mIconURL = null;}let autocomplete = this.mTabBrowser._placesAutocomplete;if (this.mBrowser.registeredOpenURI) {autocomplete.unregisterOpenPage(this.mBrowser.registeredOpenURI);delete this.mBrowser.registeredOpenURI;}if (aLocation.spec != "about:blank") {autocomplete.registerOpenPage(aLocation);this.mBrowser.registeredOpenURI = aLocation;}}if (!this.mBlank) {this._callProgressListeners("onLocationChange", [aWebProgress, aRequest, aLocation]);}if (topLevel) {this.mBrowser.lastURI = aLocation;}}, onStatusChange: function (aWebProgress, aRequest, aStatus, aMessage) {if (this.mBlank) {return;}this._callProgressListeners("onStatusChange", [aWebProgress, aRequest, aStatus, aMessage]);this.mMessage = aMessage;}, onSecurityChange: function (aWebProgress, aRequest, aState) {this._callProgressListeners("onSecurityChange", [aWebProgress, aRequest, aState]);}, onRefreshAttempted: function (aWebProgress, aURI, aDelay, aSameURI) {return this._callProgressListeners("onRefreshAttempted", [aWebProgress, aURI, aDelay, aSameURI]);}, QueryInterface: function (aIID) {if (aIID.equals(Components.interfaces.nsIWebProgressListener) || aIID.equals(Components.interfaces.nsIWebProgressListener2) || aIID.equals(Components.interfaces.nsISupportsWeakReference) || aIID.equals(Components.interfaces.nsISupports)) {return this;}throw Components.results.NS_NOINTERFACE;}};
+}
+obj[setIcon]: function setIcon(aTab, aURI) {
+    var browser = this.getBrowserForTab(aTab);
+    browser.mIconURL = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
+    if (aURI && this.mFaviconService) {
+        if (!(aURI instanceof Ci.nsIURI)) {
+            aURI = makeURI(aURI);
+        }
+        this.mFaviconService.setAndLoadFaviconForPage(browser.currentURI, aURI, false);
+    }
+    if ((browser.mIconURL || "") != aTab.getAttribute("image")) {
+        if (browser.mIconURL) {
+            aTab.setAttribute("image", browser.mIconURL);
+        } else {
+            aTab.removeAttribute("image");
+        }
+        this._tabAttrModified(aTab);
+    }
+    this._callProgressListeners(browser, "onLinkIconAvailable", [browser.mIconURL]);
+}
+obj[getIcon]: function getIcon(aTab) {
+    var browser = aTab ? this.getBrowserForTab(aTab) : this.selectedBrowser;
+    return browser.mIconURL;
+}
+obj[shouldLoadFavIcon]: function shouldLoadFavIcon(aURI) {
+    return aURI &&
+        Services.prefs.getBoolPref("browser.chrome.site_icons") &&
+        Services.prefs.getBoolPref("browser.chrome.favicons") &&
+        "schemeIs" in aURI &&
+        (aURI.schemeIs("http") || aURI.schemeIs("https"));
+}
+obj[useDefaultIcon]: function useDefaultIcon(aTab) {
+    var browser = this.getBrowserForTab(aTab);
+    var docURIObject = browser.contentDocument.documentURIObject;
+    var icon = null;
+    if (browser.contentDocument instanceof ImageDocument) {
+        if (Services.prefs.getBoolPref("browser.chrome.site_icons")) {
+            let sz = Services.prefs.getIntPref("browser.chrome.image_icons.max_size");
+            try {
+                let req = browser.contentDocument.imageRequest;
+                if (req &&
+                    req.image &&
+                    req.image.width <= sz && req.image.height <= sz) {
+                    icon = browser.currentURI;
+                }
+            } catch (e) {
+            }
+        }
+    } else if (this.shouldLoadFavIcon(docURIObject)) {
+        let url = docURIObject.prePath + "/favicon.ico";
+        if (!this.isFailedIcon(url)) {
+            icon = url;
+        }
+    }
+    this.setIcon(aTab, icon);
+}
+obj[isFailedIcon]: function isFailedIcon(aURI) {
+    if (this.mFaviconService) {
+        if (!(aURI instanceof Ci.nsIURI)) {
+            aURI = makeURI(aURI);
+        }
+        return this.mFaviconService.isFailedFavicon(aURI);
+    }
+    return null;
+}
+obj[getWindowTitleForBrowser]: function getWindowTitleForBrowser(aBrowser) {
+    var newTitle = "";
+    var docTitle;
+    var docElement = this.ownerDocument.documentElement;
+    var sep = docElement.getAttribute("titlemenuseparator");
+    if (aBrowser.docShell.contentViewer) {
+        docTitle = aBrowser.contentTitle;
+    }
+    if (!docTitle) {
+        docTitle = docElement.getAttribute("titledefault");
+    }
+    var modifier = docElement.getAttribute("titlemodifier");
+    if (docTitle) {
+        newTitle += docElement.getAttribute("titlepreface");
+        newTitle += docTitle;
+        if (modifier) {
+            newTitle += sep;
+        }
+    }
+    newTitle += modifier;
+    try {
+        if (docElement.getAttribute("chromehidden").indexOf("location") != -1) {
+            var uri = this.mURIFixup.createExposableURI(aBrowser.currentURI);
+            if (uri.scheme == "about") {
+                newTitle = uri.spec + sep + newTitle;
+            } else {
+                newTitle = uri.prePath + sep + newTitle;
+            }
+        }
+    } catch (e) {
+    }
+    if (window.TabView) {
+        let groupName = TabView.getActiveGroupName();
+        if (groupName) {
+            newTitle = groupName + sep + newTitle;
+        }
+    }
+    return newTitle;
+}
+obj[updateTitlebar]: function updateTitlebar() {
+    if (window.TabView && TabView.isVisible()) {
+        this.ownerDocument.title = TabView.windowTitle;
+    } else {
+        this.ownerDocument.title = this.getWindowTitleForBrowser(this.mCurrentBrowser);
+    }
+}
+obj[updateCurrentBrowser]: function updateCurrentBrowser(aForceUpdate) {
+    var newBrowser = this.getBrowserAtIndex(this.tabContainer.selectedIndex);
+    if (this.mCurrentBrowser == newBrowser && !aForceUpdate) {
+        return;
+    }
+    var oldTab = this.mCurrentTab;
+    if (!this._previewMode && oldTab != this.selectedTab) {
+        oldTab.owner = null;
+    }
+    if (this._lastRelatedTab) {
+        if (this._lastRelatedTab != this.selectedTab) {
+            this._lastRelatedTab.owner = null;
+        }
+        this._lastRelatedTab = null;
+    }
+    var oldBrowser = this.mCurrentBrowser;
+    if (oldBrowser) {
+        oldBrowser.setAttribute("type", "content-targetable");
+        oldBrowser.docShell.isActive = false;
+    }
+    var updatePageReport = false;
+    if (!oldBrowser ||
+        oldBrowser.pageReport && !newBrowser.pageReport ||
+        !oldBrowser.pageReport && newBrowser.pageReport) {
+        updatePageReport = true;
+    }
+    newBrowser.setAttribute("type", "content-primary");
+    newBrowser.docShell.isActive = true;
+    this.mCurrentBrowser = newBrowser;
+    this.mCurrentTab = this.selectedTab;
+    this.showTab(this.mCurrentTab);
+    if (updatePageReport) {
+        this.mCurrentBrowser.updatePageReport();
+    }
+    var loc = this.mCurrentBrowser.currentURI;
+    var webProgress = this.mCurrentBrowser.webProgress;
+    var securityUI = this.mCurrentBrowser.securityUI;
+    this._callProgressListeners(null, "onLocationChange", [webProgress, null, loc], true, false);
+    if (securityUI) {
+        this._callProgressListeners(null, "onSecurityChange", [webProgress, null, securityUI.state], true, false);
+    }
+    var listener = this.mTabListeners[this.tabContainer.selectedIndex] || null;
+    if (listener && listener.mStateFlags) {
+        this._callProgressListeners(null, "onUpdateCurrentBrowser", [listener.mStateFlags, listener.mStatus, listener.mMessage, listener.mTotalProgress], true, false);
+    }
+    if (!this._previewMode) {
+        this._fastFind.setDocShell(this.mCurrentBrowser.docShell);
+        this.updateTitlebar();
+        this.mCurrentTab.removeAttribute("titlechanged");
+    }
+    const nsIWebProgressListener = Components.interfaces.nsIWebProgressListener;
+    if (this.mCurrentTab.hasAttribute("busy") && !this.mIsBusy) {
+        this.mIsBusy = true;
+        this._callProgressListeners(null, "onStateChange", [webProgress, null, nsIWebProgressListener.STATE_START | nsIWebProgressListener.STATE_IS_NETWORK, 0], true, false);
+    }
+    if (!this.mCurrentTab.hasAttribute("busy") && this.mIsBusy) {
+        this.mIsBusy = false;
+        this._callProgressListeners(null, "onStateChange", [webProgress, null, nsIWebProgressListener.STATE_STOP | nsIWebProgressListener.STATE_IS_NETWORK, 0], true, false);
+    }
+    if (this.mCurrentTab.selected) {
+        this._setCloseKeyState(!this.mCurrentTab.pinned);
+    }
+    if (!this._previewMode) {
+        let event = document.createEvent("Events");
+        event.initEvent("TabSelect", true, false);
+        this.mCurrentTab.dispatchEvent(event);
+        this._tabAttrModified(oldTab);
+        this._tabAttrModified(this.mCurrentTab);
+        do {
+            oldBrowser._urlbarFocused = gURLBar && gURLBar.focused;
+            if (newBrowser._urlbarFocused && gURLBar) {
+                if (!window.fullScreen) {
+                    gURLBar.focus();
+                    break;
+                } else if (isTabEmpty(this.mCurrentTab)) {
+                    focusAndSelectUrlBar();
+                    break;
+                }
+            }
+            if (gFindBarInitialized &&
+                !gFindBar.hidden &&
+                gFindBar.getElement("findbar-textbox").getAttribute("focused") == "true") {
+                break;
+            }
+            let fm = Cc['@mozilla.org/focus-manager;1'].getService(Ci.nsIFocusManager);
+            let newFocusedElement = fm.getFocusedElementForWindow(window.content, true, {});
+            let focusFlags = fm.FLAG_NOSCROLL;
+            if (newFocusedElement &&
+                (newFocusedElement instanceof HTMLAnchorElement ||
+                newFocusedElement.getAttributeNS("http://www.w3.org/1999/xlink", "type") == "simple")) {
+                focusFlags |= fm.FLAG_SHOWRING;
+            }
+            fm.setFocus(newBrowser, focusFlags);
+        } while (false);
+    }
+}
+obj[_tabAttrModified]: function _tabAttrModified(aTab) {
+    if (this._removingTabs.indexOf(aTab) > -1) {
+        return;
+    }
+    var event = document.createEvent("Events");
+    event.initEvent("TabAttrModified", true, false);
+    aTab.dispatchEvent(event);
+}
+obj[setTabTitleLoading]: function setTabTitleLoading(aTab) {
+    aTab.label = this.mStringBundle.getString("tabs.connecting");
+    aTab.crop = "end";
+    this._tabAttrModified(aTab);
+}
+obj[setTabTitle]: function setTabTitle(aTab) {
+    var browser = this.getBrowserForTab(aTab);
+    var crop = "end";
+    var title = browser.contentTitle;
+    if (!title) {
+        if (browser.currentURI.spec) {
+            try {
+                title = this.mURIFixup.createExposableURI(browser.currentURI).spec;
+            } catch (ex) {
+                title = browser.currentURI.spec;
+            }
+        }
+        if (title && title != "about:blank") {
+            try {
+                var characterSet = browser.contentDocument.characterSet;
+                const textToSubURI = Components.classes['@mozilla.org/intl/texttosuburi;1'].getService(Components.interfaces.nsITextToSubURI);
+                title = textToSubURI.unEscapeNonAsciiURI(characterSet, title);
+            } catch (ex) {
+            }
+            crop = "center";
+        } else {
+            title = this.mStringBundle.getString("tabs.emptyTabTitle");
+        }
+    }
+    if (aTab.label == title && aTab.crop == crop) {
+        return false;
+    }
+    aTab.label = title;
+    aTab.crop = crop;
+    this._tabAttrModified(aTab);
+    if (aTab.selected) {
+        this.updateTitlebar();
+    }
+    return true;
+}
+obj[enterTabbedMode]: function enterTabbedMode() {
+    if (this.mTabbedMode) {
+        return;
+    }
+    this.mTabbedMode = true;
+    if (XULBrowserWindow.isBusy) {
+        this.mCurrentTab.setAttribute("busy", "true");
+        this.mIsBusy = true;
+        this.setTabTitleLoading(this.mCurrentTab);
+    } else {
+        this.setIcon(this.mCurrentTab, this.mCurrentBrowser.mIconURL);
+    }
+    var filter;
+    if (this.mTabFilters.length > 0) {
+        filter = this.mTabFilters[0];
+    } else {
+        filter = Components.classes['@mozilla.org/appshell/component/browser-status-filter;1'].createInstance(Components.interfaces.nsIWebProgress);
+        this.mTabFilters[0] = filter;
+        this.mCurrentBrowser.webProgress.addProgressListener(filter, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+    }
+    this.mProgressListeners.forEach(filter.removeProgressListener, filter);
+    const listener = this.mTabProgressListener(this.mCurrentTab, this.mCurrentBrowser, false);
+    filter.addProgressListener(listener, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+    this.mTabListeners[0] = listener;
+}
+obj[loadOneTab]: function loadOneTab(aURI, aReferrerURI, aCharset, aPostData, aLoadInBackground, aAllowThirdPartyFixup) {
+    var aFromExternal;
+    var aRelatedToCurrent;
+    if (arguments.length == 2 &&
+        typeof arguments[1] == "object" &&
+        !(arguments[1] instanceof Ci.nsIURI)) {
+        let params = arguments[1];
+        aReferrerURI = params.referrerURI;
+        aCharset = params.charset;
+        aPostData = params.postData;
+        aLoadInBackground = params.inBackground;
+        aAllowThirdPartyFixup = params.allowThirdPartyFixup;
+        aFromExternal = params.fromExternal;
+        aRelatedToCurrent = params.relatedToCurrent;
+    }
+    var bgLoad = aLoadInBackground != null ? aLoadInBackground : Services.prefs.getBoolPref("browser.tabs.loadInBackground");
+    var owner = bgLoad ? null : this.selectedTab;
+    var tab = this.addTab(aURI, {referrerURI: aReferrerURI, charset: aCharset, postData: aPostData, ownerTab: owner, allowThirdPartyFixup: aAllowThirdPartyFixup, fromExternal: aFromExternal, relatedToCurrent: aRelatedToCurrent});
+    if (!bgLoad) {
+        this.selectedTab = tab;
+    }
+    return tab;
+}
+obj[loadTabs]: function loadTabs(aURIs, aLoadInBackground, aReplace) {
+    if (!aURIs.length) {
+        return;
+    }
+    var multiple = aURIs.length > 1;
+    var owner = multiple || aLoadInBackground ? null : this.selectedTab;
+    var firstTabAdded = null;
+    if (aReplace) {
+        try {
+            this.loadURI(aURIs[0], null, null);
+        } catch (e) {
+        }
+    } else {
+        firstTabAdded = this.addTab(aURIs[0], {ownerTab: owner, skipAnimation: multiple});
+    }
+    var tabNum = this.tabContainer.selectedIndex;
+    for (let i = 1; i < aURIs.length; ++i) {
+        let tab = this.addTab(aURIs[i], {skipAnimation: true});
+        if (aReplace) {
+            this.moveTabTo(tab, ++tabNum);
+        }
+    }
+    if (!aLoadInBackground) {
+        if (firstTabAdded) {
+            this.selectedTab = firstTabAdded;
+        } else {
+            window.content.focus();
+        }
+    }
+}
+obj[addTab]: function addTab(aURI, aReferrerURI, aCharset, aPostData, aOwner, aAllowThirdPartyFixup) {
+    var aFromExternal;
+    var aRelatedToCurrent;
+    var aSkipAnimation;
+    if (arguments.length == 2 &&
+        typeof arguments[1] == "object" &&
+        !(arguments[1] instanceof Ci.nsIURI)) {
+        let params = arguments[1];
+        aReferrerURI = params.referrerURI;
+        aCharset = params.charset;
+        aPostData = params.postData;
+        aOwner = params.ownerTab;
+        aAllowThirdPartyFixup = params.allowThirdPartyFixup;
+        aFromExternal = params.fromExternal;
+        aRelatedToCurrent = params.relatedToCurrent;
+        aSkipAnimation = params.skipAnimation;
+    }
+    this._browsers = null;
+    this.enterTabbedMode();
+    if (this.mCurrentTab.owner) {
+        this.mCurrentTab.owner = null;
+    }
+    var t = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "tab");
+    var blank = !aURI || aURI == "about:blank";
+    if (blank) {
+        t.setAttribute("label", this.mStringBundle.getString("tabs.emptyTabTitle"));
+    } else {
+        t.setAttribute("label", aURI);
+    }
+    t.setAttribute("crop", "end");
+    t.setAttribute("validate", "never");
+    t.setAttribute("onerror", "this.removeAttribute('image');");
+    t.className = "tabbrowser-tab";
+    if (aSkipAnimation ||
+        this.tabContainer.getAttribute("overflow") == "true" ||
+        !Services.prefs.getBoolPref("browser.tabs.animate")) {
+        t.setAttribute("fadein", "true");
+        setTimeout(function (tabContainer) {tabContainer._handleNewTab(t);}, 0, this.tabContainer);
+    } else {
+        setTimeout(function (tabContainer) {if (t.pinned) {tabContainer._handleNewTab(t);} else {t.setAttribute("fadein", "true");}}, 0, this.tabContainer);
+    }
+    this.tabContainer.appendChild(t);
+    this._browsers = null;
+    if (aOwner) {
+        t.owner = aOwner;
+    }
+    var b = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "browser");
+    b.setAttribute("type", "content-targetable");
+    b.setAttribute("message", "true");
+    b.setAttribute("contextmenu", this.getAttribute("contentcontextmenu"));
+    b.setAttribute("tooltip", this.getAttribute("contenttooltip"));
+    if (window.gShowPageResizers &&
+        document.getElementById("addon-bar").collapsed &&
+        window.windowState == window.STATE_NORMAL) {
+        b.setAttribute("showresizer", "true");
+    }
+    if (this.hasAttribute("autocompletepopup")) {
+        b.setAttribute("autocompletepopup", this.getAttribute("autocompletepopup"));
+    }
+    b.setAttribute("autoscrollpopup", this._autoScrollPopup.id);
+    var stack = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "stack");
+    stack.setAttribute("anonid", "browserStack");
+    stack.appendChild(b);
+    stack.setAttribute("flex", "1");
+    var notificationbox = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "notificationbox");
+    notificationbox.setAttribute("flex", "1");
+    notificationbox.appendChild(stack);
+    var position = this.tabs.length - 1;
+    var uniqueId = "panel" + Date.now() + position;
+    notificationbox.id = uniqueId;
+    t.linkedPanel = uniqueId;
+    t.linkedBrowser = b;
+    t._tPos = position;
+    if (t.previousSibling.selected) {
+        t.setAttribute("afterselected", true);
+    }
+    this.mPanelContainer.appendChild(notificationbox);
+    this.tabContainer.updateVisibility();
+    var tabListener = this.mTabProgressListener(t, b, blank);
+    const filter = Components.classes['@mozilla.org/appshell/component/browser-status-filter;1'].createInstance(Components.interfaces.nsIWebProgress);
+    filter.addProgressListener(tabListener, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+    b.webProgress.addProgressListener(filter, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+    this.mTabListeners[position] = tabListener;
+    this.mTabFilters[position] = filter;
+    b._fastFind = this.fastFind;
+    b.droppedLinkHandler = handleDroppedLink;
+    var evt = document.createEvent("Events");
+    evt.initEvent("TabOpen", true, false);
+    t.dispatchEvent(evt);
+    if (!blank) {
+        b.stop();
+        b.userTypedValue = aURI;
+        let flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
+        if (aAllowThirdPartyFixup) {
+            flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_THIRD_PARTY_FIXUP;
+        }
+        if (aFromExternal) {
+            flags |= Ci.nsIWebNavigation.LOAD_FLAGS_FROM_EXTERNAL;
+        }
+        try {
+            b.loadURIWithFlags(aURI, flags, aReferrerURI, aCharset, aPostData);
+        } catch (ex) {
+        }
+    }
+    b.docShell.isActive = false;
+    if ((aRelatedToCurrent == null ? aReferrerURI : aRelatedToCurrent) &&
+        Services.prefs.getBoolPref("browser.tabs.insertRelatedAfterCurrent")) {
+        let newTabPos = (this._lastRelatedTab || this.selectedTab)._tPos + 1;
+        if (this._lastRelatedTab) {
+            this._lastRelatedTab.owner = null;
+        } else {
+            t.owner = this.selectedTab;
+        }
+        this.moveTabTo(t, newTabPos);
+        this._lastRelatedTab = t;
+    }
+    return t;
+}
+obj[warnAboutClosingTabs]: function warnAboutClosingTabs(aAll) {
+    var tabsToClose = (aAll ? this.tabs.length : this.visibleTabs.length - 1) - gBrowser._numPinnedTabs;
+    if (tabsToClose <= 1) {
+        return true;
+    }
+    const pref = "browser.tabs.warnOnClose";
+    var shouldPrompt = Services.prefs.getBoolPref(pref);
+    if (!shouldPrompt) {
+        return true;
+    }
+    var ps = Services.prompt;
+    var warnOnClose = {value: true};
+    var bundle = this.mStringBundle;
+    window.focus();
+    var buttonPressed = ps.confirmEx(window, bundle.getString("tabs.closeWarningTitle"), bundle.getFormattedString("tabs.closeWarningMultipleTabs", [tabsToClose]), ps.BUTTON_TITLE_IS_STRING * ps.BUTTON_POS_0 + ps.BUTTON_TITLE_CANCEL * ps.BUTTON_POS_1, bundle.getString("tabs.closeButtonMultiple"), null, null, bundle.getString("tabs.closeWarningPromptMe"), warnOnClose);
+    var reallyClose = buttonPressed == 0;
+    if (reallyClose && !warnOnClose.value) {
+        Services.prefs.setBoolPref(pref, false);
+    }
+    return reallyClose;
+}
+obj[removeAllTabsBut]: function removeAllTabsBut(aTab) {
+    if (aTab.pinned) {
+        return;
+    }
+    if (this.warnAboutClosingTabs(false)) {
+        let tabs = this.visibleTabs;
+        this.selectedTab = aTab;
+        for (let i = tabs.length - 1; i >= 0; --i) {
+            if (tabs[i] != aTab && !tabs[i].pinned) {
+                this.removeTab(tabs[i]);
+            }
+        }
+    }
+}
+obj[removeCurrentTab]: function removeCurrentTab(aParams) {
+    this.removeTab(this.mCurrentTab, aParams);
+}
+obj[removeTab]: function removeTab(aTab, aParams) {
+    if (aParams) {
+        var animate = aParams.animate;
+    }
+    if (!animate && this._removingTabs.indexOf(aTab) > -1) {
+        this._endRemoveTab(aTab);
+        return;
+    }
+    var isLastTab = this.tabs.length - this._removingTabs.length == 1;
+    if (!this._beginRemoveTab(aTab, false, null, true)) {
+        return;
+    }
+    if (!animate ||
+        isLastTab ||
+        aTab.pinned ||
+        this._removingTabs.length > 3 ||
+        aTab.getAttribute("fadein") != "true" ||
+        window.getComputedStyle(aTab).maxWidth == "0.1px" ||
+        !Services.prefs.getBoolPref("browser.tabs.animate")) {
+        this._endRemoveTab(aTab);
+        return;
+    }
+    this._blurTab(aTab);
+    aTab.removeAttribute("fadein");
+    setTimeout(function (tab, tabbrowser) {if (tab.parentNode && window.getComputedStyle(tab).maxWidth == "0.1px") {NS_ASSERT(false, "Giving up waiting for the tab closing animation to finish (bug 608589)");tabbrowser._endRemoveTab(tab);}}, 3000, aTab, this);
+}
+obj[_beginRemoveTab]: function _beginRemoveTab(aTab, aTabWillBeMoved, aCloseWindowWithLastTab, aCloseWindowFastpath) {
+    if (this._removingTabs.indexOf(aTab) > -1 || this._windowIsClosing) {
+        return false;
+    }
+    var browser = this.getBrowserForTab(aTab);
+    if (!aTabWillBeMoved) {
+        let ds = browser.docShell;
+        if (ds && ds.contentViewer && !ds.contentViewer.permitUnload()) {
+            return false;
+        }
+    }
+    var closeWindow = false;
+    var newTab = false;
+    if (this.tabs.length - this._removingTabs.length == 1) {
+        closeWindow = aCloseWindowWithLastTab != null ? aCloseWindowWithLastTab : !window.toolbar.visible ||
+            this.tabContainer._closeWindowWithLastTab;
+        if (closeWindow &&
+            aCloseWindowFastpath &&
+            this._removingTabs.length == 0 &&
+            (this._windowIsClosing = window.closeWindow(true))) {
+            return null;
+        }
+        newTab = true;
+    }
+    this._removingTabs.push(aTab);
+    this.tabContainer.updateVisibility();
+    var evt = document.createEvent("UIEvent");
+    evt.initUIEvent("TabClose", true, false, window, aTabWillBeMoved ? 1 : 0);
+    aTab.dispatchEvent(evt);
+    const filter = this.mTabFilters[aTab._tPos];
+    browser.webProgress.removeProgressListener(filter);
+    filter.removeProgressListener(this.mTabListeners[aTab._tPos]);
+    this.mTabListeners[aTab._tPos].destroy();
+    if (browser.registeredOpenURI && !aTabWillBeMoved) {
+        this._placesAutocomplete.unregisterOpenPage(browser.registeredOpenURI);
+        delete browser.registeredOpenURI;
+    }
+    browser.setAttribute("type", "content-targetable");
+    Array.forEach(this.tabs, function (tab) {if ("owner" in tab && tab.owner == aTab) {tab.owner = null;}});
+    aTab._endRemoveArgs = [closeWindow, newTab];
+    return true;
+}
+obj[_blurTab]: function _blurTab(aTab) {
+    if (this.mCurrentTab != aTab) {
+        return;
+    }
+    if (aTab.owner &&
+        !aTab.owner.hidden &&
+        this._removingTabs.indexOf(aTab.owner) == -1 &&
+        Services.prefs.getBoolPref("browser.tabs.selectOwnerOnClose")) {
+        this.selectedTab = aTab.owner;
+        return;
+    }
+    var remainingTabs = this.visibleTabs;
+    var numTabs = remainingTabs.length;
+    if (numTabs == 0 || numTabs == 1 && remainingTabs[0] == aTab) {
+        remainingTabs = Array.filter(this.tabs, function (tab) {return this._removingTabs.indexOf(tab) == -1;}, this);
+    }
+    var tab = aTab;
+    do {
+        tab = tab.nextSibling;
+    } while (tab && remainingTabs.indexOf(tab) == -1);
+    if (!tab) {
+        tab = aTab;
+        do {
+            tab = tab.previousSibling;
+        } while (tab && remainingTabs.indexOf(tab) == -1);
+    }
+    this.selectedTab = tab;
+}
+obj[swapBrowsersAndCloseOther]: function swapBrowsersAndCloseOther(aOurTab, aOtherTab) {
+    var remoteBrowser = aOtherTab.ownerDocument.defaultView.gBrowser;
+    if (!remoteBrowser._beginRemoveTab(aOtherTab, true, true)) {
+        return;
+    }
+    var ourIndex = aOurTab._tPos;
+    const filter = this.mTabFilters[ourIndex];
+    var tabListener = this.mTabListeners[ourIndex];
+    var ourBrowser = this.getBrowserForTab(aOurTab);
+    ourBrowser.webProgress.removeProgressListener(filter);
+    filter.removeProgressListener(tabListener);
+    var tabListenerBlank = tabListener.mBlank;
+    var otherBrowser = aOtherTab.linkedBrowser;
+    if (ourBrowser.registeredOpenURI) {
+        this._placesAutocomplete.unregisterOpenPage(ourBrowser.registeredOpenURI);
+        delete ourBrowser.registeredOpenURI;
+    }
+    if (otherBrowser.registeredOpenURI) {
+        ourBrowser.registeredOpenURI = otherBrowser.registeredOpenURI;
+        delete otherBrowser.registeredOpenURI;
+    }
+    if (!ourBrowser.mIconURL && otherBrowser.mIconURL) {
+        this.setIcon(aOurTab, otherBrowser.mIconURL);
+    }
+    var isBusy = aOtherTab.hasAttribute("busy");
+    if (isBusy) {
+        aOurTab.setAttribute("busy", "true");
+        this._tabAttrModified(aOurTab);
+        if (aOurTab == this.selectedTab) {
+            this.mIsBusy = true;
+        }
+    }
+    ourBrowser.swapDocShells(otherBrowser);
+    remoteBrowser._endRemoveTab(aOtherTab);
+    tabListener = this.mTabProgressListener(aOurTab, ourBrowser, tabListenerBlank);
+    this.mTabListeners[ourIndex] = tabListener;
+    filter.addProgressListener(tabListener, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+    ourBrowser.webProgress.addProgressListener(filter, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+    if (isBusy) {
+        this.setTabTitleLoading(aOurTab);
+    } else {
+        this.setTabTitle(aOurTab);
+    }
+    if (aOurTab == this.selectedTab) {
+        this.updateCurrentBrowser(true);
+    }
+}
+obj[reloadAllTabs]: function reloadAllTabs() {
+    var tabs = this.visibleTabs;
+    var l = tabs.length;
+    for (var i = 0; i < l; i++) {
+        try {
+            this.getBrowserForTab(tabs[i]).reload();
+        } catch (e) {
+        }
+    }
+}
+obj[reloadTab]: function reloadTab(aTab) {
+    this.getBrowserForTab(aTab).reload();
+}
+obj[addProgressListener]: function addProgressListener(aListener, aMask) {
+    if (!this.mAddProgressListenerWasCalled) {
+        this.mAddProgressListenerWasCalled = true;
+        this.tabContainer.updateVisibility();
+    }
+    if (this.mProgressListeners.length == 1) {
+        this.enterTabbedMode();
+    }
+    this.mProgressListeners.push(aListener);
+    if (!this.mTabbedMode) {
+        if (this.mTabFilters.length == 0) {
+            const filter = Components.classes['@mozilla.org/appshell/component/browser-status-filter;1'].createInstance(Components.interfaces.nsIWebProgress);
+            this.mTabFilters[0] = filter;
+            this.mCurrentBrowser.webProgress.addProgressListener(filter, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+        }
+        this.mTabFilters[0].addProgressListener(aListener, aMask);
+    }
+}
+obj[removeProgressListener]: function removeProgressListener(aListener) {
+    this.mProgressListeners = this.mProgressListeners.filter((function (l) l != aListener));
+    if (!this.mTabbedMode) {
+        this.mTabFilters[0].removeProgressListener(aListener);
+    }
+}
+obj[addTabsProgressListener]: function addTabsProgressListener(aListener) {
+    this.enterTabbedMode();
+    this.mTabsProgressListeners.push(aListener);
+}
+obj[removeTabsProgressListener]: function removeTabsProgressListener(aListener) {
+    this.mTabsProgressListeners = this.mTabsProgressListeners.filter((function (l) l != aListener));
+}
+obj[getBrowserForTab]: function getBrowserForTab(aTab) {
+    return aTab.linkedBrowser;
+}
+obj[showOnlyTheseTabs]: function showOnlyTheseTabs(aTabs) {
+    Array.forEach(this.tabs, function (tab) {if (aTabs.indexOf(tab) == -1) {this.hideTab(tab);} else {this.showTab(tab);}}, this);
+}
+obj[showTab]: function showTab(aTab) {
+    if (aTab.hidden) {
+        aTab.removeAttribute("hidden");
+        this.tabContainer.adjustTabstrip();
+        let event = document.createEvent("Events");
+        event.initEvent("TabShow", true, false);
+        aTab.dispatchEvent(event);
+    }
+}
+obj[hideTab]: function hideTab(aTab) {
+    if (!aTab.hidden &&
+        !aTab.pinned &&
+        !aTab.selected && this._removingTabs.indexOf(aTab) == -1) {
+        aTab.setAttribute("hidden", "true");
+        this.tabContainer.adjustTabstrip();
+        let event = document.createEvent("Events");
+        event.initEvent("TabHide", true, false);
+        aTab.dispatchEvent(event);
+    }
+}
+obj[selectTabAtIndex]: function selectTabAtIndex(aIndex, aEvent) {
+    var tabs = this.visibleTabs;
+    if (aIndex < 0) {
+        aIndex += tabs.length;
+    }
+    if (aIndex >= 0 && aIndex < tabs.length) {
+        this.selectedTab = tabs[aIndex];
+    }
+    if (aEvent) {
+        aEvent.preventDefault();
+        aEvent.stopPropagation();
+    }
+}
+obj[selectedTab]: [object XULElement]
+obj[selectedBrowser]: [object XULElement]
+obj[browsers]: [object XULElement]
+obj[replaceTabWithWindow]: function replaceTabWithWindow(aTab) {
+    if (this.tabs.length == 1) {
+        return null;
+    }
+    return window.openDialog(getBrowserURL(), "_blank", "dialog=no,all", aTab);
+}
+obj[moveTabTo]: function moveTabTo(aTab, aIndex) {
+    var oldPosition = aTab._tPos;
+    if (oldPosition == aIndex) {
+        return;
+    }
+    if (aTab.pinned) {
+        aIndex = Math.min(aIndex, this._numPinnedTabs - 1);
+    } else {
+        aIndex = Math.max(aIndex, this._numPinnedTabs);
+    }
+    if (oldPosition == aIndex) {
+        return;
+    }
+    this._lastRelatedTab = null;
+    this.mTabFilters.splice(aIndex, 0, this.mTabFilters.splice(aTab._tPos, 1)[0]);
+    this.mTabListeners.splice(aIndex, 0, this.mTabListeners.splice(aTab._tPos, 1)[0]);
+    aIndex = aIndex < aTab._tPos ? aIndex : aIndex + 1;
+    this.mCurrentTab._selected = false;
+    this.tabContainer.insertBefore(aTab, this.tabs.item(aIndex));
+    this._browsers = null;
+    for (let i = 0; i < this.tabs.length; i++) {
+        this.tabs[i]._tPos = i;
+        this.tabs[i]._selected = false;
+    }
+    this.mCurrentTab._selected = true;
+    this.tabContainer.mTabstrip.ensureElementIsVisible(this.mCurrentTab, false);
+    if (aTab.pinned) {
+        this.tabContainer._positionPinnedTabs();
+    }
+    var evt = document.createEvent("UIEvents");
+    evt.initUIEvent("TabMove", true, false, window, oldPosition);
+    aTab.dispatchEvent(evt);
+}
+obj[moveTabForward]: function moveTabForward() {
+    var tabPos = this.mCurrentTab._tPos;
+    if (tabPos < this.browsers.length - 1) {
+        this.moveTabTo(this.mCurrentTab, tabPos + 1);
+        this.mCurrentTab.focus();
+    } else if (this.arrowKeysShouldWrap) {
+        this.moveTabToStart();
+    }
+}
+obj[moveTabBackward]: function moveTabBackward() {
+    var tabPos = this.mCurrentTab._tPos;
+    if (tabPos > 0) {
+        this.moveTabTo(this.mCurrentTab, tabPos - 1);
+        this.mCurrentTab.focus();
+    } else if (this.arrowKeysShouldWrap) {
+        this.moveTabToEnd();
+    }
+}
+obj[moveTabToStart]: function moveTabToStart() {
+    var tabPos = this.mCurrentTab._tPos;
+    if (tabPos > 0) {
+        this.moveTabTo(this.mCurrentTab, 0);
+        this.mCurrentTab.focus();
+    }
+}
+obj[moveTabToEnd]: function moveTabToEnd() {
+    var tabPos = this.mCurrentTab._tPos;
+    if (tabPos < this.browsers.length - 1) {
+        this.moveTabTo(this.mCurrentTab, this.browsers.length - 1);
+        this.mCurrentTab.focus();
+    }
+}
+obj[moveTabOver]: function moveTabOver(aEvent) {
+    var direction = window.getComputedStyle(this.parentNode, null).direction;
+    if (direction == "ltr" && aEvent.keyCode == KeyEvent.DOM_VK_RIGHT ||
+        direction == "rtl" && aEvent.keyCode == KeyEvent.DOM_VK_LEFT) {
+        this.moveTabForward();
+    } else {
+        this.moveTabBackward();
+    }
+}
+obj[duplicateTab]: function duplicateTab(aTab) {
+    return Cc['@mozilla.org/browser/sessionstore;1'].getService(Ci.nsISessionStore).duplicateTab(window, aTab);
+}
+obj[canGoBack]: false
+obj[canGoForward]: false
+obj[goBack]: function goBack() {
+    return this.mCurrentBrowser.goBack();
+}
+obj[goForward]: function goForward() {
+    return this.mCurrentBrowser.goForward();
+}
+obj[reload]: function reload() {
+    return this.mCurrentBrowser.reload();
+}
+obj[reloadWithFlags]: function reloadWithFlags(aFlags) {
+    return this.mCurrentBrowser.reloadWithFlags(aFlags);
+}
+obj[stop]: function stop() {
+    return this.mCurrentBrowser.stop();
+}
+obj[loadURI]: function loadURI(aURI, aReferrerURI, aCharset) {
+    return this.mCurrentBrowser.loadURI(aURI, aReferrerURI, aCharset);
+}
+obj[loadURIWithFlags]: function loadURIWithFlags(aURI, aFlags, aReferrerURI, aCharset, aPostData) {
+    return this.mCurrentBrowser.loadURIWithFlags(aURI, aFlags, aReferrerURI, aCharset, aPostData);
+}
+obj[goHome]: function goHome() {
+    return this.mCurrentBrowser.goHome();
+}
+obj[homePage]: http://www.mozilla.org/
+obj[gotoIndex]: function gotoIndex(aIndex) {
+    return this.mCurrentBrowser.gotoIndex(aIndex);
+}
+obj[attachFormFill]: function attachFormFill() {
+    for (var i = 0; i < this.mPanelContainer.childNodes.length; ++i) {
+        var cb = this.getBrowserAtIndex(i);
+        cb.attachFormFill();
+    }
+}
+obj[detachFormFill]: function detachFormFill() {
+    for (var i = 0; i < this.mPanelContainer.childNodes.length; ++i) {
+        var cb = this.getBrowserAtIndex(i);
+        cb.detachFormFill();
+    }
+}
+obj[pageReport]: null
+obj[currentURI]: [xpconnect wrapped nsIURI]
+obj[fastFind]: [xpconnect wrapped nsITypeAheadFind]
+obj[docShell]: [xpconnect wrapped (nsISupports, nsIDocShell, nsIInterfaceRequestor, nsIWebNavigation, nsIWebProgress, nsIDocShellHistory, nsIDocumentLoader, nsILoadContext)]
+obj[webNavigation]: [xpconnect wrapped (nsISupports, nsIDocShell, nsIInterfaceRequestor, nsIWebNavigation, nsIWebProgress, nsIDocShellHistory, nsIDocumentLoader, nsILoadContext)]
+obj[webBrowserFind]: [xpconnect wrapped nsIWebBrowserFind]
+obj[webProgress]: [xpconnect wrapped (nsISupports, nsIDocShell, nsIInterfaceRequestor, nsIWebNavigation, nsIWebProgress, nsIDocShellHistory, nsIDocumentLoader, nsILoadContext)]
+obj[contentWindow]: [object XrayWrapper [object Window]]
+obj[sessionHistory]: [xpconnect wrapped nsISHistory]
+obj[markupDocumentViewer]: [xpconnect wrapped (nsISupports, nsIContentViewer, nsIMarkupDocumentViewer)]
+obj[contentViewerEdit]: [xpconnect wrapped (nsISupports, nsIContentViewer, nsIMarkupDocumentViewer, nsIContentViewerEdit)]
+obj[contentViewerFile]: [xpconnect wrapped (nsISupports, nsIContentViewer, nsIMarkupDocumentViewer, nsIContentViewerEdit, nsIContentViewerFile)]
+obj[documentCharsetInfo]: [xpconnect wrapped nsIDocumentCharsetInfo]
+obj[contentDocument]: [object XrayWrapper [object HTMLDocument]]
+obj[contentTitle]: Welcome - Cleveland Utilities
+obj[contentPrincipal]: [xpconnect wrapped (nsISupports, nsIPrincipal, nsISerializable)]
+obj[securityUI]: [xpconnect wrapped (nsISupports, nsISecureBrowserUI, nsISSLStatusProvider)]
+obj[_handleKeyEvent]: function _handleKeyEvent(aEvent) {
+    if (!aEvent.isTrusted) {
+        return;
+    }
+    if (aEvent.altKey) {
+        return;
+    }
+    if (!gFindBarInitialized &&
+        !(aEvent.ctrlKey || aEvent.metaKey) && !aEvent.getPreventDefault()) {
+        let charCode = aEvent.charCode;
+        if (charCode) {
+            let char = String.fromCharCode(charCode);
+            if (char == "'" ||
+                char == "/" ||
+                Services.prefs.getBoolPref("accessibility.typeaheadfind")) {
+                gFindBar._onBrowserKeypress(aEvent);
+                return;
+            }
+        }
+    }
+    if (aEvent.ctrlKey &&
+        !aEvent.shiftKey &&
+        !aEvent.metaKey &&
+        aEvent.keyCode == KeyEvent.DOM_VK_F4 &&
+        this.mTabBox.handleCtrlPageUpDown) {
+        this.removeCurrentTab({animate: true});
+        aEvent.stopPropagation();
+        aEvent.preventDefault();
+    }
+}
+obj[userTypedClear]: 0
+obj[userTypedValue]: null
+obj[createTooltip]: function createTooltip(event) {
+    event.stopPropagation();
+    var tab = document.tooltipNode;
+    if (tab.localName != "tab") {
+        event.preventDefault();
+        return;
+    }
+    event.target.setAttribute("label", tab.mOverCloseButton ? tab.getAttribute("closetabtext") : tab.getAttribute("label"));
+}
+obj[handleEvent]: function handleEvent(aEvent) {
+    switch (aEvent.type) {
+      case "keypress":
+        this._handleKeyEvent(aEvent);
+        break;
+      default:;
+    }
+}
+obj[setStripVisibilityTo]: function setStripVisibilityTo(aShow) {
+    this.tabContainer.visible = aShow;
+}
+obj[getStripVisibility]: function getStripVisibility() {
+    return this.tabContainer.visible;
+}
+obj[mContextTab]: null
+obj[mPrefs]: [xpconnect wrapped (nsISupports, nsIPrefService, nsIPrefBranch2)]
+obj[mTabContainer]: [object XULElement]
+obj[mTabs]: [object NodeList]
+obj[mStrip]: [object Object]
+obj[querySelector]: function querySelector() {
+    [native code]
+}
+obj[querySelectorAll]: function querySelectorAll() {
+    [native code]
+}
+obj[style]: [object CSSStyleDeclaration]
+obj[scrollTop]: 0
+obj[scrollLeft]: 0
+obj[scrollHeight]: 422
+obj[scrollWidth]: 1280
+obj[clientTop]: 0
+obj[clientLeft]: 0
+obj[clientHeight]: 422
+obj[clientWidth]: 1280
+obj[firstElementChild]: [object XULElement]
+obj[lastElementChild]: [object XULElement]
+obj[previousElementSibling]: null
+obj[nextElementSibling]: [object XULElement]
+obj[childElementCount]: 1
+obj[children]: [object HTMLCollection]
+obj[classList]: 
+obj[setCapture]: function setCapture() {
+    [native code]
+}
+obj[getElementsByClassName]: function getElementsByClassName() {
+    [native code]
+}
+obj[getClientRects]: function getClientRects() {
+    [native code]
+}
+obj[getBoundingClientRect]: function getBoundingClientRect() {
+    [native code]
+}
+obj[releaseCapture]: function releaseCapture() {
+    [native code]
+}
+obj[mozMatchesSelector]: function mozMatchesSelector() {
+    [native code]
+}
+obj[baseURI]: chrome://browser/content/browser.xul
+obj[textContent]: 
+obj[setUserData]: function setUserData() {
+    [native code]
+}
+obj[getUserData]: function getUserData() {
+    [native code]
+}
+obj[compareDocumentPosition]: function compareDocumentPosition() {
+    [native code]
+}
+obj[isSameNode]: function isSameNode() {
+    [native code]
+}
+obj[lookupPrefix]: function lookupPrefix() {
+    [native code]
+}
+obj[isDefaultNamespace]: function isDefaultNamespace() {
+    [native code]
+}
+obj[lookupNamespaceURI]: function lookupNamespaceURI() {
+    [native code]
+}
+obj[isEqualNode]: function isEqualNode() {
+    [native code]
+}
+obj[getFeature]: function getFeature() {
+    [native code]
+}
+obj[dispatchEvent]: function dispatchEvent() {
+    [native code]
+}
+obj[removeEventListener]: function removeEventListener() {
+    [native code]
+}
+obj[addEventListener]: function addEventListener() {
+    [native code]
+}
+obj[id]: content
+obj[className]: 
+obj[align]: 
+obj[dir]: 
+obj[flex]: 1
+obj[flexGroup]: 
+obj[ordinal]: 
+obj[orient]: 
+obj[pack]: 
+obj[hidden]: false
+obj[collapsed]: false
+obj[observes]: 
+obj[menu]: 
+obj[contextMenu]: 
+obj[tooltip]: 
+obj[width]: 
+obj[height]: 
+obj[minWidth]: 
+obj[minHeight]: 
+obj[maxWidth]: 
+obj[maxHeight]: 
+obj[persist]: 
+obj[left]: 
+obj[top]: 
+obj[datasources]: 
+obj[ref]: 
+obj[tooltipText]: 
+obj[statusText]: 
+obj[allowEvents]: false
+obj[database]: null
+obj[builder]: null
+obj[resource]: [xpconnect wrapped nsIRDFResource]
+obj[controllers]: [object XULControllers]
+obj[boxObject]: [object BoxObject]
+obj[focus]: function focus() {
+    [native code]
+}
+obj[blur]: function blur() {
+    [native code]
+}
+obj[click]: function click() {
+    [native code]
+}
+obj[doCommand]: function doCommand() {
+    [native code]
+}
+obj[getElementsByAttribute]: function getElementsByAttribute() {
+    [native code]
+}
+obj[getElementsByAttributeNS]: function getElementsByAttributeNS() {
+    [native code]
+}
+obj[tagName]: tabbrowser
+obj[removeAttributeNS]: function removeAttributeNS() {
+    [native code]
+}
+obj[removeAttribute]: function removeAttribute() {
+    [native code]
+}
+obj[getAttribute]: function getAttribute() {
+    [native code]
+}
+obj[getElementsByTagName]: function getElementsByTagName() {
+    [native code]
+}
+obj[setAttribute]: function setAttribute() {
+    [native code]
+}
+obj[getElementsByTagNameNS]: function getElementsByTagNameNS() {
+    [native code]
+}
+obj[hasAttributeNS]: function hasAttributeNS() {
+    [native code]
+}
+obj[setAttributeNS]: function setAttributeNS() {
+    [native code]
+}
+obj[hasAttribute]: function hasAttribute() {
+    [native code]
+}
+obj[getAttributeNS]: function getAttributeNS() {
+    [native code]
+}
+obj[nextSibling]: [object XULElement]
+obj[firstChild]: [object XULElement]
+obj[prefix]: null
+obj[nodeValue]: null
+obj[childNodes]: [object NodeList]
+obj[nodeName]: tabbrowser
+obj[namespaceURI]: http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul
+obj[previousSibling]: null
+obj[nodeType]: 1
+obj[localName]: tabbrowser
+obj[lastChild]: [object XULElement]
+obj[ownerDocument]: [object XULDocument]
+obj[parentNode]: [object XULElement]
+obj[attributes]: [object NamedNodeMap]
+obj[appendChild]: function appendChild() {
+    [native code]
+}
+obj[cloneNode]: function cloneNode() {
+    [native code]
+}
+obj[normalize]: function normalize() {
+    [native code]
+}
+obj[hasChildNodes]: function hasChildNodes() {
+    [native code]
+}
+obj[insertBefore]: function insertBefore() {
+    [native code]
+}
+obj[replaceChild]: function replaceChild() {
+    [native code]
+}
+obj[removeChild]: function removeChild() {
+    [native code]
+}
+obj[hasAttributes]: function hasAttributes() {
+    [native code]
+}
+obj[ELEMENT_NODE]: 1
+obj[isSupported]: function isSupported() {
+    [native code]
+}
+obj[getAttributeNode]: function getAttributeNode() {
+    [native code]
+}
+obj[setAttributeNode]: function setAttributeNode() {
+    [native code]
+}
+obj[removeAttributeNode]: function removeAttributeNode() {
+    [native code]
+}
+obj[getAttributeNodeNS]: function getAttributeNodeNS() {
+    [native code]
+}
+obj[setAttributeNodeNS]: function setAttributeNodeNS() {
+    [native code]
+}
+obj[ATTRIBUTE_NODE]: 2
+obj[TEXT_NODE]: 3
+obj[CDATA_SECTION_NODE]: 4
+obj[ENTITY_REFERENCE_NODE]: 5
+obj[ENTITY_NODE]: 6
+obj[PROCESSING_INSTRUCTION_NODE]: 7
+obj[COMMENT_NODE]: 8
+obj[DOCUMENT_NODE]: 9
+obj[DOCUMENT_TYPE_NODE]: 10
+obj[DOCUMENT_FRAGMENT_NODE]: 11
+obj[NOTATION_NODE]: 12
+obj[DOCUMENT_POSITION_DISCONNECTED]: 1
+obj[DOCUMENT_POSITION_PRECEDING]: 2
+obj[DOCUMENT_POSITION_FOLLOWING]: 4
+obj[DOCUMENT_POSITION_CONTAINS]: 8
+obj[DOCUMENT_POSITION_CONTAINED_BY]: 16
+obj[DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC]: 32

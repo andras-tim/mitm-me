@@ -35,9 +35,9 @@
  * ***** END LICENSE BLOCK ***** */
 
 var mitm_me = {
-  DEBUG_MODE: false,
+  DEBUG_MODE: true,
 
-  onLoad: function() {
+  onWindowLoad: function() {
     // initialization code
     this.initialized = true;
     this.strings = document.getElementById("mitm-me-strings");
@@ -49,42 +49,50 @@ var mitm_me = {
     this._prefService.QueryInterface(Components.interfaces.nsIPrefBranch2);
     this._prefService.addObserver("", this, false);
 
-    //gBrowser.removeEventListener("click", BrowserOnClick, false);
-    gBrowser.addEventListener("click", this.onCommand, false);
+    document.getElementById("content")
+      .addEventListener("DOMLinkAdded", mitm_me.onPageLoad, false);
+    //gBrowser.addEventListener("command", this.onCommand, false);
+  },
 
-    var silent = this._prefService.getBoolPref("silent_mode");
-    this.dump('silent_mode: '+silent);
-    if (silent)
-      document.getElementById("content")
-      .addEventListener("DOMLinkAdded", this.onCommand, false);
+  onPageLoad: function(event) {
+    var ot = event.originalTarget;
+    var errorDoc = ot.ownerDocument;
+    mitm_me.dumpObj(errorDoc, "onPageLoad :: ot.ownerDocument");
+
+    // Rename exception button if exists
+    if (/^about:neterror\?e=nssBadCert/.test(errorDoc.documentURI)
+      || /^about:certerror/.test(errorDoc.documentURI))
+    {
+      alert(1);
+      var silent = mitm_me._prefService.getBoolPref("silent_mode");
+      if (silent) {
+        mitm_me.onCommand(event);
+      }
+      else {
+        // Rename exception button if exists
+        var edb = errorDoc.getElementById('exceptionDialogButton');
+        if (edb) {
+          alert(4);
+          edb.id = 'exceptionDialogButton_ModifiedByMitMMe';
+          edb.addEventListener("click", mitm_me.onCommand, false);
+        }
+      }
+    }
   },
 
   onCommand: function(event) {
     var ot = event.originalTarget;
     var errorDoc = ot.ownerDocument;
     var uri = gBrowser.currentURI;
+    var silent = mitm_me._prefService.getBoolPref("silent_mode");
+    mitm_me.dumpObj(errorDoc, "onCommand :: ot.ownerDocument");
+    mitm_me.dumpObj(gBrowser, "onCommand :: gBrowser.currentURI");
 
-    mitm_me.dump("originalTarget:");
-    mitm_me.dumpObj(ot.ownerDocument);
-
-    // If the event came from an ssl error page
-    // optional semi-automatic "Add Exception" button event...
-    // FF3.5 support: about:certerror
-    if (! (/^about:neterror\?e=nssBadCert/.test(errorDoc.documentURI)
-     || /^about:certerror/.test(errorDoc.documentURI)))
-    {
-      BrowserOnClick(event);
-      return;
-    }
-
-    var edb = errorDoc.getElementById('exceptionDialogButton');
-    if (edb)
-      edb.id = 'exceptionDialogButton_ModifiedByMitMMe';
-
+    /*
     // Don't trust synthetic events
-    if (!event.isTrusted)
-    {
-      BrowserOnClick(event);
+    if (!event.isTrusted) {
+      if (!silent)
+        BrowserOnClick(event);
       return;
     }
 
@@ -92,7 +100,7 @@ var mitm_me = {
     {
       BrowserOnClick(event);
       return;
-    }
+    }*/
 
     // Get the cert
     var recentCertsSvc = Components.classes["@mozilla.org/security/recentbadcerts;1"]
@@ -211,9 +219,11 @@ var mitm_me = {
     var ConsoleService = Cc['@mozilla.org/consoleservice;1'].getService(Ci.nsIConsoleService);
     ConsoleService.logStringMessage(message);
   },
-  dumpObj: function(obj) {
+  dumpObj: function(obj,title) {
     if(!this.DEBUG_MODE) return;
     var str = "";
+    if (title)
+      str = str + title + "\n";
     for(i in obj) {
       try {
         str += "obj["+i+"]: " + obj[i] + "\n";
@@ -252,4 +262,4 @@ badCertListener.prototype = {
   }
 }
 
-window.addEventListener("load", function () { mitm_me.onLoad(); }, false);
+window.addEventListener("load", function () { mitm_me.onWindowLoad(); }, false);

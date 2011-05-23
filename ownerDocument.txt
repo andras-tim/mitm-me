@@ -1,0 +1,313 @@
+onCommand :: ot.ownerDocument
+obj[querySelector]: function querySelector() {
+    [native code]
+}
+obj[querySelectorAll]: function querySelectorAll() {
+    [native code]
+}
+obj[evaluate]: function evaluate() {
+    [native code]
+}
+obj[createExpression]: function createExpression() {
+    [native code]
+}
+obj[createNSResolver]: function createNSResolver() {
+    [native code]
+}
+obj[baseURI]: about:certerror?e=nssBadCert&u=https%3A//www.paybill.com/cu/&s=expertBadCert&c=UTF-8&d=A%28z%29%20www.paybill.com%20%C3%A9rv%C3%A9nytelen%20biztons%C3%A1gi%20tan%C3%BAs%C3%ADtv%C3%A1nyt%20haszn%C3%A1l.%0A%0AA%20tan%C3%BAs%C3%ADtv%C3%A1ny%20nem%20megb%C3%ADzhat%C3%B3%2C%20mert%20nincs%20megadva%20a%20kibocs%C3%A1t%C3%B3%20l%C3%A1nca.%0A%0A%28Hibak%C3%B3d%3A%20sec_error_unknown_issuer%29%0A
+obj[textContent]: null
+obj[setUserData]: function setUserData() {
+    [native code]
+}
+obj[getUserData]: function getUserData() {
+    [native code]
+}
+obj[compareDocumentPosition]: function compareDocumentPosition() {
+    [native code]
+}
+obj[isSameNode]: function isSameNode() {
+    [native code]
+}
+obj[lookupPrefix]: function lookupPrefix() {
+    [native code]
+}
+obj[isDefaultNamespace]: function isDefaultNamespace() {
+    [native code]
+}
+obj[lookupNamespaceURI]: function lookupNamespaceURI() {
+    [native code]
+}
+obj[isEqualNode]: function isEqualNode() {
+    [native code]
+}
+obj[getFeature]: function getFeature() {
+    [native code]
+}
+obj[documentURI]: about:certerror?e=nssBadCert&u=https%3A//www.paybill.com/cu/&s=expertBadCert&c=UTF-8&d=A%28z%29%20www.paybill.com%20%C3%A9rv%C3%A9nytelen%20biztons%C3%A1gi%20tan%C3%BAs%C3%ADtv%C3%A1nyt%20haszn%C3%A1l.%0A%0AA%20tan%C3%BAs%C3%ADtv%C3%A1ny%20nem%20megb%C3%ADzhat%C3%B3%2C%20mert%20nincs%20megadva%20a%20kibocs%C3%A1t%C3%B3%20l%C3%A1nca.%0A%0A%28Hibak%C3%B3d%3A%20sec_error_unknown_issuer%29%0A
+obj[adoptNode]: function adoptNode() {
+    [native code]
+}
+obj[renameNode]: function renameNode() {
+    [native code]
+}
+obj[dispatchEvent]: function dispatchEvent() {
+    [native code]
+}
+obj[removeEventListener]: function removeEventListener() {
+    [native code]
+}
+obj[addEventListener]: function addEventListener() {
+    [native code]
+}
+obj[createNodeIterator]: function createNodeIterator() {
+    [native code]
+}
+obj[defaultView]: [object XrayWrapper [object Window]]
+obj[createEvent]: function createEvent() {
+    [native code]
+}
+obj[title]: Nem megbízható kapcsolat
+obj[activeElement]: [object XrayWrapper [object HTMLButtonElement]]
+obj[getElementsByClassName]: function getElementsByClassName() {
+    [native code]
+}
+obj[hasFocus]: function hasFocus() {
+    [native code]
+}
+obj[elementFromPoint]: function elementFromPoint() {
+    [native code]
+}
+obj[width]: 807
+obj[height]: 604
+obj[domain]: null
+obj[designMode]: off
+obj[getSelection]: function getSelection() {
+    [native code]
+}
+obj[body]: [object XrayWrapper [object HTMLBodyElement]]
+obj[anchors]: [object XrayWrapper [object HTMLCollection]]
+obj[links]: [object XrayWrapper [object HTMLCollection]]
+obj[URL]: about:certerror?e=nssBadCert&u=https%3A//www.paybill.com/cu/&s=expertBadCert&c=UTF-8&d=A%28z%29%20www.paybill.com%20%C3%A9rv%C3%A9nytelen%20biztons%C3%A1gi%20tan%C3%BAs%C3%ADtv%C3%A1nyt%20haszn%C3%A1l.%0A%0AA%20tan%C3%BAs%C3%ADtv%C3%A1ny%20nem%20megb%C3%ADzhat%C3%B3%2C%20mert%20nincs%20megadva%20a%20kibocs%C3%A1t%C3%B3%20l%C3%A1nca.%0A%0A%28Hibak%C3%B3d%3A%20sec_error_unknown_issuer%29%0A
+obj[referrer]: 
+obj[forms]: [object XrayWrapper [object HTMLCollection]]
+obj[cookie]: 
+obj[images]: [object XrayWrapper [object HTMLCollection]]
+obj[write]: function write() {
+    [native code]
+}
+obj[writeln]: function writeln() {
+    [native code]
+}
+obj[getElementsByName]: function getElementsByName() {
+    [native code]
+}
+obj[documentElement]: [object XrayWrapper [object HTMLHtmlElement]]
+obj[implementation]: [object DOMImplementation]
+obj[doctype]: [object XrayWrapper [object DocumentType]]
+obj[getElementsByTagName]: function getElementsByTagName() {
+    [native code]
+}
+obj[getElementsByTagNameNS]: function getElementsByTagNameNS() {
+    [native code]
+}
+obj[getElementById]: function getElementById() {
+    [native code]
+}
+obj[createDocumentFragment]: function createDocumentFragment() {
+    [native code]
+}
+obj[createElement]: function createElement() {
+    [native code]
+}
+obj[createElementNS]: function createElementNS() {
+    [native code]
+}
+obj[importNode]: function importNode() {
+    [native code]
+}
+obj[createTextNode]: function createTextNode() {
+    [native code]
+}
+obj[nextSibling]: null
+obj[firstChild]: [object XrayWrapper [object DocumentType]]
+obj[prefix]: null
+obj[nodeValue]: null
+obj[childNodes]: [object XrayWrapper [object NodeList]]
+obj[nodeName]: #document
+obj[namespaceURI]: null
+obj[previousSibling]: null
+obj[nodeType]: 9
+obj[localName]: null
+obj[lastChild]: [object XrayWrapper [object HTMLHtmlElement]]
+obj[ownerDocument]: null
+obj[parentNode]: null
+obj[attributes]: null
+obj[appendChild]: function appendChild() {
+    [native code]
+}
+obj[cloneNode]: function cloneNode() {
+    [native code]
+}
+obj[normalize]: function normalize() {
+    [native code]
+}
+obj[hasChildNodes]: function hasChildNodes() {
+    [native code]
+}
+obj[insertBefore]: function insertBefore() {
+    [native code]
+}
+obj[replaceChild]: function replaceChild() {
+    [native code]
+}
+obj[removeChild]: function removeChild() {
+    [native code]
+}
+obj[hasAttributes]: function hasAttributes() {
+    [native code]
+}
+obj[styleSheets]: [object StyleSheetList]
+obj[isSupported]: function isSupported() {
+    [native code]
+}
+obj[createComment]: function createComment() {
+    [native code]
+}
+obj[createCDATASection]: function createCDATASection() {
+    [native code]
+}
+obj[createProcessingInstruction]: function createProcessingInstruction() {
+    [native code]
+}
+obj[createAttribute]: function createAttribute() {
+    [native code]
+}
+obj[createEntityReference]: function createEntityReference() {
+    [native code]
+}
+obj[createAttributeNS]: function createAttributeNS() {
+    [native code]
+}
+obj[ELEMENT_NODE]: 1
+obj[ATTRIBUTE_NODE]: 2
+obj[TEXT_NODE]: 3
+obj[CDATA_SECTION_NODE]: 4
+obj[ENTITY_REFERENCE_NODE]: 5
+obj[ENTITY_NODE]: 6
+obj[PROCESSING_INSTRUCTION_NODE]: 7
+obj[COMMENT_NODE]: 8
+obj[DOCUMENT_NODE]: 9
+obj[DOCUMENT_TYPE_NODE]: 10
+obj[DOCUMENT_FRAGMENT_NODE]: 11
+obj[NOTATION_NODE]: 12
+obj[applets]: [object XrayWrapper [object HTMLCollection]]
+obj[close]: function close() {
+    [native code]
+}
+obj[alinkColor]: 
+obj[linkColor]: 
+obj[vlinkColor]: 
+obj[bgColor]: 
+obj[fgColor]: 
+obj[embeds]: [object XrayWrapper [object HTMLCollection]]
+obj[open]: function open() {
+    [native code]
+}
+obj[clear]: function clear() {
+    [native code]
+}
+obj[captureEvents]: function captureEvents() {
+    [native code]
+}
+obj[releaseEvents]: function releaseEvents() {
+    [native code]
+}
+obj[routeEvent]: function routeEvent() {
+    [native code]
+}
+obj[compatMode]: CSS1Compat
+obj[plugins]: [object XrayWrapper [object HTMLCollection]]
+obj[execCommand]: function execCommand() {
+    [native code]
+}
+obj[execCommandShowHelp]: function execCommandShowHelp() {
+    [native code]
+}
+obj[queryCommandEnabled]: function queryCommandEnabled() {
+    [native code]
+}
+obj[queryCommandIndeterm]: function queryCommandIndeterm() {
+    [native code]
+}
+obj[queryCommandState]: function queryCommandState() {
+    [native code]
+}
+obj[queryCommandSupported]: function queryCommandSupported() {
+    [native code]
+}
+obj[queryCommandText]: function queryCommandText() {
+    [native code]
+}
+obj[queryCommandValue]: function queryCommandValue() {
+    [native code]
+}
+obj[head]: [object XrayWrapper [object HTMLHeadElement]]
+obj[characterSet]: UTF-8
+obj[dir]: ltr
+obj[location]: https://www.paybill.com/cu/
+obj[contentType]: application/xhtml+xml
+obj[readyState]: interactive
+obj[lastModified]: 05/23/2011 12:05:17
+obj[currentScript]: null
+obj[releaseCapture]: function releaseCapture() {
+    [native code]
+}
+obj[mozSetImageElement]: function mozSetImageElement() {
+    [native code]
+}
+obj[preferredStyleSheetSet]: 
+obj[selectedStyleSheetSet]: 
+obj[lastStyleSheetSet]: null
+obj[styleSheetSets]: [object DOMStringList]
+obj[enableStyleSheetsForSet]: function enableStyleSheetsForSet() {
+    [native code]
+}
+obj[createRange]: function createRange() {
+    [native code]
+}
+obj[createTreeWalker]: function createTreeWalker() {
+    [native code]
+}
+obj[getAnonymousNodes]: function getAnonymousNodes() {
+    [native code]
+}
+obj[getAnonymousElementByAttribute]: function getAnonymousElementByAttribute() {
+    [native code]
+}
+obj[addBinding]: function addBinding() {
+    [native code]
+}
+obj[removeBinding]: function removeBinding() {
+    [native code]
+}
+obj[getBindingParent]: function getBindingParent() {
+    [native code]
+}
+obj[loadBindingDocument]: function loadBindingDocument() {
+    [native code]
+}
+obj[inputEncoding]: UTF-8
+obj[xmlEncoding]: UTF-8
+obj[xmlStandalone]: false
+obj[xmlVersion]: 1.0
+obj[strictErrorChecking]: true
+obj[domConfig]: Unavailable
+obj[normalizeDocument]: function normalizeDocument() {
+    [native code]
+}
+obj[DOCUMENT_POSITION_DISCONNECTED]: 1
+obj[DOCUMENT_POSITION_PRECEDING]: 2
+obj[DOCUMENT_POSITION_FOLLOWING]: 4
+obj[DOCUMENT_POSITION_CONTAINS]: 8
+obj[DOCUMENT_POSITION_CONTAINED_BY]: 16
+obj[DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC]: 32
