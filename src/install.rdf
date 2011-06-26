@@ -4,7 +4,7 @@
     <em:id>mitm-me@andras.tim</em:id>
     <em:type>2</em:type>
     <em:name>MitM Me (Cert Error Bypass)</em:name>
-    <em:version>2.1.110513</em:version>
+    <em:version>2.1.110626</em:version>
     <em:creator>Andras TIM</em:creator>
     <em:contributor>Foudil Brétel</em:contributor>
     <em:contributor>Johnathan Nightingale (original addon @ 2008)</em:contributor>
@@ -16,7 +16,7 @@
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id> <!-- Firefox -->
         <em:minVersion>3.5</em:minVersion>
-        <em:maxVersion>4.0.*</em:maxVersion>
+        <em:maxVersion>6.*</em:maxVersion>
       </Description>
     </em:targetApplication>
   </Description>
